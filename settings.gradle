@@ -1,0 +1,3 @@
+rootProject.name = 'nexusj'
+include 'tracker'
+include 'nexus'
