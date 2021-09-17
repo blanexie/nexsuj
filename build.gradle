@@ -29,6 +29,7 @@ subprojects {
     dependencies {
         compile group: 'ch.qos.logback', name: 'logback-classic', version: '1.2.5'
         compile group: 'cn.hutool', name: 'hutool-all', version: '5.7.10'
+
         compile "org.jetbrains.kotlin:kotlin-stdlib"
     }
 }
