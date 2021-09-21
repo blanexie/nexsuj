@@ -1,14 +1,21 @@
 plugins {
     id 'java'
     id 'kotlin'
-    id 'org.jetbrains.kotlin.jvm'
+    id 'application'
 }
 
 group 'com.github.blanexie'
 version '1.0-SNAPSHOT'
 
+application {
+    mainClass = 'com.github.blanexie.tracker.AppKt'
+}
 
 dependencies {
+
+    implementation "io.ktor:ktor-server-core:1.6.3"
+    implementation "io.ktor:ktor-server-netty:1.6.3"
+    implementation "ch.qos.logback:logback-classic:1.2.5"
 
     implementation "org.jetbrains.kotlin:kotlin-stdlib"
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.0'

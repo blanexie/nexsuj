@@ -1,5 +1,9 @@
 package com.github.blanexie.tracker.bencode
 
+
+/**
+ * 种子文件对象
+ */
 class Torrent {
 
     /**
@@ -76,7 +80,6 @@ class Torrent {
 
 
     companion object {
-
         /**
          * 静态方法， 由BeMap转换成种子对象
          */
