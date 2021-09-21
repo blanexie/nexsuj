@@ -8,7 +8,7 @@ class BeList(private val value: List<BeObj>) : BeObj {
         return str.append("e").toString()
     }
 
-    override fun getValue(): List<BeObj> {
+    override fun getOriginal(): List<BeObj> {
         return this.value
     }
 

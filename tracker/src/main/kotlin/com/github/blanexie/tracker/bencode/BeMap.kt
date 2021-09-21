@@ -9,9 +9,14 @@ class BeMap(private val value: Map<BeStr, BeObj>) : BeObj {
         return str.append("e").toString()
     }
 
-    override fun getValue(): Map<BeStr, BeObj> {
+    override fun getOriginal(): Map<BeStr, BeObj> {
         return this.value
     }
+
+    fun getValue(key: String): BeObj? {
+        return this.value[BeStr(key)]
+    }
+
 
 }
 

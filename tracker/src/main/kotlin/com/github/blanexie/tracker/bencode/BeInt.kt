@@ -6,7 +6,7 @@ class BeInt(private val value: Long) : BeObj  {
         return "i" + value + "e"
     }
 
-    override  fun getValue(): Long {
+    override  fun getOriginal(): Long {
         return this.value
     }
 

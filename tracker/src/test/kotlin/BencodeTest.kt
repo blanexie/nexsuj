@@ -1,4 +1,5 @@
 import cn.hutool.core.io.resource.ClassPathResource
+import cn.hutool.json.JSONUtil
 import com.github.blanexie.tracker.bencode.*
 import org.junit.jupiter.api.Test
 import java.nio.ByteBuffer
@@ -13,7 +14,7 @@ class BencodeTest {
         val beObj = benDecode(wrap)
         assert(beObj is BeInt)
         assert(beObj.toStr() == value)
-        assert(beObj.getValue() == value.substring(1, value.length - 1).toLong())
+        assert(beObj.getOriginal() == value.substring(1, value.length - 1).toLong())
     }
 
     @Test
@@ -23,7 +24,7 @@ class BencodeTest {
         val beObj = benDecode(wrap)
         assert(beObj is BeStr)
         assert(beObj.toStr() == value)
-        assert(beObj.getValue() == value.substring(3, value.length))
+        assert(beObj.getOriginal() == value.substring(3, value.length))
     }
 
 
@@ -34,7 +35,7 @@ class BencodeTest {
         val pair = benDecode(wrap)
         assert(pair is BeList)
 
-        val list = (pair as BeList).getValue()
+        val list = (pair as BeList).getOriginal()
         val toStr = pair.toStr()
         assert(toStr == value)
 
@@ -53,7 +54,7 @@ class BencodeTest {
         val pair = benDecode(wrap)
         assert(pair is BeMap)
 
-        val map = (pair as BeMap).getValue()
+        val map = (pair as BeMap).getOriginal()
         val toStr = pair.toStr()
         assert(toStr == value)
         assert(map.size == 2)
@@ -80,20 +81,32 @@ class BencodeTest {
         val wrap = ByteBuffer.wrap(readBytes)
         val benDecode = benDecode(wrap)
         assert(wrap.position() == readBytes.size)
-        println(benDecode)
+
+        val torrent = Torrent.build(benDecode as BeMap)
+
+        val toBeMap = torrent.toBeMap()
+        println(toBeMap)
 
     }
 
 
     @Test
     fun beTorrent2() {
-
         val classPathResource = ClassPathResource("signleFile.torrent")
         val readBytes = classPathResource.readBytes()
         val wrap = ByteBuffer.wrap(readBytes)
         val benDecode = benDecode(wrap)
         assert(wrap.position() == readBytes.size)
-        println(benDecode)
+        val torrent = Torrent.build(benDecode as BeMap)
+        println(JSONUtil.toJsonStr(torrent))
+
+        val toBeMap = torrent.toBeMap()
+
+        println(JSONUtil.toJsonStr(toBeMap))
+
+
+
+
     }
 
 
