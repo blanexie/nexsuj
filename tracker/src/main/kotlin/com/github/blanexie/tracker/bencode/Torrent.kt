@@ -85,39 +85,47 @@ class Torrent {
          */
         fun build(beMap: BeMap): Torrent {
             val torrent = Torrent()
-            torrent.announce = beMap.getValue("announce")!!.getOriginal().toString()
-            val value = beMap.getValue("announce-list")?.getOriginal()
-            if (value is BeList) {
-                torrent.announceList = value.getOriginal().map { it.getOriginal().toString() }
-            }
-            torrent.comment = beMap.getValue("comment")?.getOriginal().toString()
-            torrent.creationDate = beMap.getValue("creation date")?.getOriginal() as Long
-            torrent.createdBy = beMap.getValue("created by")?.getOriginal().toString()
-            torrent.encoding = beMap.getValue("encoding")?.getOriginal().toString()
-            torrent.info = Info()
-            val infoMap = beMap.getValue("info")!! as BeMap
-            torrent.info.name = infoMap.getValue("name")!!.getOriginal() as String
-            torrent.info.pieces = infoMap.getValue("pieces")!!.getOriginal().toString().toByteArray()
-            torrent.info.pieceLength = infoMap.getValue("piece length")!!.getOriginal() as Long
 
-            val length = infoMap.getValue("length")
+            //开始处理文件 外部字段
+            torrent.announce = beMap.getMapValue("announce")!!.getValue().toString()
+            beMap.getMapValue("announce-list")?.let { it ->
+                if(it is BeList){
+                    torrent.announceList = it.getValue().map { it.getValue().toString() }
+                }
+            }
+
+            torrent.comment = beMap.getMapValue("comment")?.getValue().toString()
+            torrent.creationDate = beMap.getMapValue("creation date")?.getValue() as Long
+            torrent.createdBy = beMap.getMapValue("created by")?.getValue().toString()
+            torrent.encoding = beMap.getMapValue("encoding")?.getValue().toString()
+
+           //开始处理Info中字段
+            torrent.info = Info()
+            val infoMap = beMap.getMapValue("info")!! as BeMap
+            torrent.info.name = infoMap.getMapValue("name")!!.getValue() as String
+            torrent.info.pieces = infoMap.getMapValue("pieces")!!.getValue().toString().toByteArray()
+            torrent.info.pieceLength = infoMap.getMapValue("piece length")!!.getValue() as Long
+
+            //开始处理单文件和多文件
+            val length = infoMap.getMapValue("length")
             if (length != null) {
-                torrent.info.length = length.getOriginal() as Long
-                torrent.info.private = infoMap.getValue("private")?.getOriginal() as Long
-                torrent.info.source = infoMap.getValue("source")?.getOriginal().toString()
-                torrent.info.publisher = infoMap.getValue("publisher")?.getOriginal().toString()
-                torrent.info.publisherUrl = infoMap.getValue("publisher-url")?.getOriginal().toString()
+                torrent.info.length = length.getValue() as Long
+                torrent.info.private = infoMap.getMapValue("private")?.getValue() as Long
+                torrent.info.source = infoMap.getMapValue("source")?.getValue().toString()
+                torrent.info.publisher = infoMap.getMapValue("publisher")?.getValue().toString()
+                torrent.info.publisherUrl = infoMap.getMapValue("publisher-url")?.getValue().toString()
             } else {
-                val filesMap = infoMap.getValue("files") as BeList
-                torrent.info.files = filesMap.getOriginal().map { it ->
+                val filesMap = infoMap.getMapValue("files") as BeList
+
+                torrent.info.files = filesMap.getValue().map { it ->
                     val fileMap = it as BeMap
                     val fileBt = FileBt()
-                    fileBt.length = fileMap.getValue("length")!!.getOriginal() as Long
-                    fileBt.path =
-                        (fileMap.getValue("path")!! as BeList).getOriginal().map { it.getOriginal() as String }
+                    fileBt.length = fileMap.getMapValue("length")!!.getValue() as Long
+                    fileBt.path = (fileMap.getMapValue("path")!! as BeList).getValue().map { it.getValue() as String }
                     fileBt
                 }
             }
+
             return torrent
         }
     }
@@ -140,15 +148,11 @@ class Info {
     var files: List<FileBt>? = null
     var private: Long? = null
     var source: String? = null
-
     var publisher: String? = null
     var publisherUrl: String? = null
-
-
 }
 
 class FileBt {
-
     var path: List<String>? = null
     var length: Long? = null
 }

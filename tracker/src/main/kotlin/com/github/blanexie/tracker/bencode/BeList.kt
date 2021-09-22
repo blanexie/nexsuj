@@ -2,13 +2,13 @@ package com.github.blanexie.tracker.bencode
 
 class BeList(private val value: List<BeObj>) : BeObj {
 
-    override fun toStr(): String {
+    override fun toBenStr(): String {
         val str = StringBuilder("l")
-        this.value.forEach { str.append(it.toStr()) }
+        this.value.forEach { str.append(it.toBenStr()) }
         return str.append("e").toString()
     }
 
-    override fun getOriginal(): List<BeObj> {
+    override fun getValue(): List<BeObj> {
         return this.value
     }
 
