@@ -6,7 +6,9 @@ fun Byte.asChar(): Char {
     return Char(this.toInt())
 }
 
-
+/**
+ * 解码操作方法, 将种子文件转换成定义的BeMap对象
+ */
 internal fun benDecode(byteBuffer: ByteBuffer): BeObj {
     val byte = byteBuffer.get(byteBuffer.position())
     if (byte.asChar() == 'i') {
@@ -36,6 +38,20 @@ private fun decodeMap(byteBuffer: ByteBuffer): BeMap {
     }
 }
 
+private fun decodeList(byteBuffer: ByteBuffer): BeList {
+    byteBuffer.get()
+    val value = arrayListOf<BeObj>()
+    while (true) {
+        val beObj = benDecode(byteBuffer)
+        value.add(beObj)
+        val byte = byteBuffer.get(byteBuffer.position())
+        if (byte.asChar() == 'e') {
+            byteBuffer.get()
+            return BeList(value)
+        }
+    }
+}
+
 private fun decodeStr(byteBuffer: ByteBuffer): BeStr {
     val bytes = arrayListOf<Byte>()
     while (true) {
@@ -48,22 +64,6 @@ private fun decodeStr(byteBuffer: ByteBuffer): BeStr {
             return BeStr(String(data))
         } else {
             bytes.add(byte)
-        }
-
-    }
-}
-
-
-private fun decodeList(byteBuffer: ByteBuffer): BeList {
-    byteBuffer.get()
-    val value = arrayListOf<BeObj>()
-    while (true) {
-        val beObj = benDecode(byteBuffer)
-        value.add(beObj)
-        val byte = byteBuffer.get(byteBuffer.position())
-        if (byte.asChar() == 'e') {
-            byteBuffer.get()
-            return BeList(value)
         }
     }
 }

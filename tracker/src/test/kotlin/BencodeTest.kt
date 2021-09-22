@@ -13,8 +13,8 @@ class BencodeTest {
         val wrap = ByteBuffer.wrap(value.toByteArray())
         val beObj = benDecode(wrap)
         assert(beObj is BeInt)
-        assert(beObj.toStr() == value)
-        assert(beObj.getOriginal() == value.substring(1, value.length - 1).toLong())
+        assert(beObj.toBenStr() == value)
+        assert(beObj.getValue() == value.substring(1, value.length - 1).toLong())
     }
 
     @Test
@@ -23,8 +23,8 @@ class BencodeTest {
         val wrap = ByteBuffer.wrap(value.toByteArray())
         val beObj = benDecode(wrap)
         assert(beObj is BeStr)
-        assert(beObj.toStr() == value)
-        assert(beObj.getOriginal() == value.substring(3, value.length))
+        assert(beObj.toBenStr() == value)
+        assert(beObj.getValue() == value.substring(3, value.length))
     }
 
 
@@ -35,8 +35,8 @@ class BencodeTest {
         val pair = benDecode(wrap)
         assert(pair is BeList)
 
-        val list = (pair as BeList).getOriginal()
-        val toStr = pair.toStr()
+        val list = (pair as BeList).getValue()
+        val toStr = pair.toBenStr()
         assert(toStr == value)
 
         assert(wrap.position() == 19)
@@ -54,8 +54,8 @@ class BencodeTest {
         val pair = benDecode(wrap)
         assert(pair is BeMap)
 
-        val map = (pair as BeMap).getOriginal()
-        val toStr = pair.toStr()
+        val map = (pair as BeMap).getValue()
+        val toStr = pair.toBenStr()
         assert(toStr == value)
         assert(map.size == 2)
 

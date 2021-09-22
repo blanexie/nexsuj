@@ -9,6 +9,7 @@
 * https://github.com/atomashpolskiy/bt
 * https://github.com/BrightStarry/zx-bt
 
+* https://sunyunqiang.com/blog/bittorrent_protocol/
 
 ## bep3 协议
 * 英文地址 http://www.bittorrent.org/beps/bep_0003.html

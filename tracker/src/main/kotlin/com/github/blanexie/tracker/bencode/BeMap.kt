@@ -3,20 +3,19 @@ package com.github.blanexie.tracker.bencode
 
 class BeMap(private val value: Map<BeStr, BeObj>) : BeObj {
 
-    override fun toStr(): String {
+    override fun toBenStr(): String {
         val str = StringBuilder("d");
-        value.forEach { (t, u) -> str.append(t.toStr() + u.toStr()) }
+        value.forEach { (t, u) -> str.append(t.toBenStr() + u.toBenStr()) }
         return str.append("e").toString()
     }
 
-    override fun getOriginal(): Map<BeStr, BeObj> {
+    override fun getValue(): Map<BeStr, BeObj> {
         return this.value
     }
 
-    fun getValue(key: String): BeObj? {
+    fun getMapValue(key: String): BeObj? {
         return this.value[BeStr(key)]
     }
-
 
 }
 

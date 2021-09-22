@@ -1,7 +1,9 @@
 package com.github.blanexie.tracker.bencode
 
 interface BeObj  {
-    fun toStr(): String
 
-    fun  getOriginal(): Any
+    fun toBenStr(): String
+
+    fun  getValue(): Any
+
 }

@@ -2,11 +2,11 @@ package com.github.blanexie.tracker.bencode
 
 class BeStr(private val value: String) : BeObj  {
 
-    override fun toStr(): String {
+    override fun toBenStr(): String {
         return value.length.toString() + ":" + value
     }
 
-    override fun getOriginal(): String {
+    override fun getValue(): String {
         return this.value
     }
 
