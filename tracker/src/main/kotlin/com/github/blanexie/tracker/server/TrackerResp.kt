@@ -7,9 +7,9 @@ data class TrackerResp(
     //通常还会有如下一些字段出现:
     val donePeers: Int,  // 下载完毕的节点个数
 
-    val failureReason: String, // 如果有本项,说明发生了一个严重错误,将不会返回其他任何信息. 键值是人类可读的错误信息.
-    val warningMessage: String, // (新的) 键值是人类可读的的一般警告信息.
-    val minInterval: String, // 最小的发布间隔时间 (秒). 限制客户端重新发布.
+    val failureReason: String?, // 如果有本项,说明发生了一个严重错误,将不会返回其他任何信息. 键值是人类可读的错误信息.
+    val warningMessage: String?, // (新的) 键值是人类可读的的一般警告信息.
+    val minInterval: Int, // 最小的发布间隔时间 (秒). 限制客户端重新发布.
     val trackerId: String, //  一个必须被回送的字符串,当客户端再次发布.
     val complete: Int, //  整数, 拥有完全文件的伙伴数.
     val incomplete: Int, // 整数, 拥有不完全文件的伙伴数,也就是"水蛭".
