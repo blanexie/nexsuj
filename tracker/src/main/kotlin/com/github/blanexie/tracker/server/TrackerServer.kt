@@ -1,6 +1,7 @@
 package com.github.blanexie.tracker.server
 
 import com.github.blanexie.tracker.bencode.BeInt
+import com.github.blanexie.tracker.bencode.BeMap
 import com.github.blanexie.tracker.bencode.BeObj
 import com.github.blanexie.tracker.bencode.BeStr
 import io.ktor.application.*
@@ -8,11 +9,14 @@ import io.ktor.features.*
 import io.ktor.request.*
 import io.ktor.response.*
 import io.ktor.routing.*
+import io.ktor.utils.io.*
 import java.net.InetAddress
 
 import io.netty.util.NetUtil.LOCALHOST
 import org.slf4j.LoggerFactory
 import java.net.UnknownHostException
+import java.util.*
+import kotlin.collections.ArrayList
 
 
 val log = LoggerFactory.getLogger("announce")!!
@@ -20,7 +24,7 @@ val log = LoggerFactory.getLogger("announce")!!
 fun Route.announce() {
 
 
-    val peerMap = hashMapOf<String, TrackerReq>()
+    val peerMap = hashMapOf<String, MutableList<Peer>>()
 
     get("announce") {
 
@@ -39,9 +43,14 @@ fun Route.announce() {
         if (ip == null) {
             ip = getIpAddress(call.request)
         }
-
-
-       val req =  peerMap[infoHash]
+        ip="192.168.0.112"
+        val peer = Peer(ip!!, port, peerId)
+        var arrayList = peerMap[infoHash]
+        if (arrayList == null) {
+            arrayList = mutableListOf()
+            peerMap[infoHash] = arrayList
+        }
+        arrayList.add(peer)
 
         val resp = hashMapOf<BeStr, BeObj>()
         resp[BeStr("interval")] = BeInt(3600)
@@ -49,23 +58,27 @@ fun Route.announce() {
         resp[BeStr("incomplete")] = BeInt(0)
         resp[BeStr("complete")] = BeInt(1)
 
-        req?.let {
-            val toByteArray = it.ip!!.split(",").map { it.toByte() }.toByteArray()
-            val ushr = it.port.ushr(4).toByte()
+        val map = arrayList.filter { it.ip != ip }.map { getCompactPeer(ip, port) }
+            .flatMap { it.toList() }.toByteArray()
 
+        resp[BeStr("peers")] = BeStr(String(map))
 
-        }
-
-
-        resp[BeStr("peers")] = BeInt(1)
-
-        peerMap[infoHash] =
-            TrackerReq(infoHash, peerId, port, uploaded, downloaded, left, event, ip, compact, trackerId, numwant)
-
-        call.respondText("hello word")
+        call.respondText(BeMap(resp).toBenStr())
     }
 
 }
+
+fun getCompactPeer(ip: String, port: Int): ByteArray {
+    val map = ip.split(".").map { it.toByte() }
+
+    val p1 = port ushr 8
+    val p2 = port and 255
+
+    val plus = map.plus(p1.toByte()).plus(p2.toByte())
+
+    return plus.toByteArray()
+}
+
 
 const val UNKNOWN = "unknown";
 
