@@ -11,8 +11,8 @@ class BencodeTest {
     fun beInt() {
         val value = "i198e"
         val wrap = ByteBuffer.wrap(value.toByteArray())
-        val beObj = benDecode(wrap)
-        assert(beObj is BeInt)
+        val beObj = toBeObj(wrap)
+        assert(beObj.type == BeType.BeInt)
         assert(beObj.toBenStr() == value)
         assert(beObj.getValue() == value.substring(1, value.length - 1).toLong())
     }
@@ -21,8 +21,8 @@ class BencodeTest {
     fun beStr() {
         val value = "10:i19safag8e"
         val wrap = ByteBuffer.wrap(value.toByteArray())
-        val beObj = benDecode(wrap)
-        assert(beObj is BeStr)
+        val beObj = toBeObj(wrap)
+        assert(beObj.type == BeType.BeStr)
         assert(beObj.toBenStr() == value)
         assert(beObj.getValue() == value.substring(3, value.length))
     }
@@ -32,18 +32,18 @@ class BencodeTest {
     fun beList() {
         val value = "l10:i19safag8ei13ee"
         val wrap = ByteBuffer.wrap(value.toByteArray())
-        val pair = benDecode(wrap)
-        assert(pair is BeList)
+        val pair = toBeObj(wrap)
+        assert(pair.type == BeType.BeList)
 
-        val list = (pair as BeList).getValue()
+        val list = pair.getValue() as List<*>
         val toStr = pair.toBenStr()
         assert(toStr == value)
 
         assert(wrap.position() == 19)
 
         assert(list.size == 2)
-        assert(list[0] is BeStr)
-        assert(list[1] is BeInt)
+        assert(list[0] is String)
+        assert(list[1] is Long)
 
     }
 
@@ -51,10 +51,10 @@ class BencodeTest {
     fun beMap() {
         val value = "d3:key10:i19safag8e2:vai13ee"
         val wrap = ByteBuffer.wrap(value.toByteArray())
-        val pair = benDecode(wrap)
-        assert(pair is BeMap)
+        val pair = toBeObj(wrap)
+        assert(pair.type == BeType.BeMap)
 
-        val map = (pair as BeMap).getValue()
+        val map = pair.getValue() as Map<String, Any>
         val toStr = pair.toBenStr()
         assert(toStr == value)
         assert(map.size == 2)
@@ -64,13 +64,12 @@ class BencodeTest {
         var flag = true
         for (entry in map) {
             if (flag) {
-                assert(entry.value is BeStr)
+                assert(entry.value is String)
                 flag = false
             } else {
-                assert(entry.value is BeInt)
+                assert(entry.value is Long)
             }
         }
-
     }
 
 
@@ -79,12 +78,12 @@ class BencodeTest {
         val classPathResource = ClassPathResource("mutableFiles.torrent")
         val readBytes = classPathResource.readBytes()
         val wrap = ByteBuffer.wrap(readBytes)
-        val benDecode = benDecode(wrap)
+        val benDecode = toBeObj(wrap)
         assert(wrap.position() == readBytes.size)
 
-        val torrent = Torrent.build(benDecode as BeMap)
+        val torrent = toTorrent(benDecode)
 
-        val toBeMap = torrent.toBeMap()
+        val toBeMap = toBeMap(torrent)
         println(toBeMap)
 
     }
@@ -95,17 +94,14 @@ class BencodeTest {
         val classPathResource = ClassPathResource("signleFile.torrent")
         val readBytes = classPathResource.readBytes()
         val wrap = ByteBuffer.wrap(readBytes)
-        val benDecode = benDecode(wrap)
+        val benDecode = toBeObj(wrap)
         assert(wrap.position() == readBytes.size)
-        val torrent = Torrent.build(benDecode as BeMap)
+        val torrent = toTorrent(benDecode)
         println(JSONUtil.toJsonStr(torrent))
 
-        val toBeMap = torrent.toBeMap()
+        val toBeMap = toBeMap(torrent)
 
         println(JSONUtil.toJsonStr(toBeMap))
-
-
-
 
     }
 
