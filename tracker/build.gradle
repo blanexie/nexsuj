@@ -12,6 +12,10 @@ application {
 }
 
 dependencies {
+    implementation 'org.ktorm:ktorm-core:3.4.1'
+    implementation 'com.zaxxer:HikariCP:5.0.0'
+    implementation group: 'mysql', name: 'mysql-connector-java', version: '8.0.26'
+
 
     implementation "io.ktor:ktor-server-core:1.6.3"
     implementation "io.ktor:ktor-server-netty:1.6.3"

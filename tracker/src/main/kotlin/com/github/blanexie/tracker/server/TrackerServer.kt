@@ -1,69 +1,82 @@
 package com.github.blanexie.tracker.server
 
-import com.github.blanexie.tracker.bencode.BeInt
-import com.github.blanexie.tracker.bencode.BeMap
+import com.github.blanexie.dao.*
 import com.github.blanexie.tracker.bencode.BeObj
-import com.github.blanexie.tracker.bencode.BeStr
+import com.zaxxer.hikari.HikariConfig
+import com.zaxxer.hikari.HikariDataSource
 import io.ktor.application.*
 import io.ktor.features.*
 import io.ktor.request.*
 import io.ktor.response.*
 import io.ktor.routing.*
+import io.ktor.util.Identity.decode
 import io.ktor.utils.io.*
+import org.ktorm.database.Database
+import org.ktorm.dsl.and
+import org.ktorm.dsl.eq
+import org.ktorm.dsl.inList
+import org.ktorm.entity.*
 import java.net.InetAddress
 
-import io.netty.util.NetUtil.LOCALHOST
 import org.slf4j.LoggerFactory
-import java.net.UnknownHostException
+import java.time.LocalDateTime
 import java.util.*
-import kotlin.collections.ArrayList
 
 
 val log = LoggerFactory.getLogger("announce")!!
 
+
 fun Route.announce() {
-
-
-    val peerMap = hashMapOf<String, MutableList<Peer>>()
 
     get("announce") {
 
-        val infoHash = call.request.queryParameters["info_hash"]!!
-        val peerId = call.request.queryParameters["peer_id"]!!
-        val port = call.request.queryParameters["port"]!!.toInt()
-        val uploaded = call.request.queryParameters["uploaded"]!!.toLong()
-        val downloaded = call.request.queryParameters["downloaded"]!!.toLong()
-        val left = call.request.queryParameters["left"]!!.toLong()
-        val trackerId = call.request.queryParameters["trackerid"]
-        val numwant = call.request.queryParameters["numwant"]?.toInt()
-        val event = call.request.queryParameters["event"]
-        var ip = call.request.queryParameters["ip"]
-        var compact = call.request.queryParameters["compact"]?.toInt()
+        val trackerReq = TrackerReq(call.request)
 
-        if (ip == null) {
-            ip = getIpAddress(call.request)
+        // 0. 检查访问的客户端是否符合要求
+        val errorMsg = blockBrowser(call.request)
+        if (errorMsg != null) {
+            call.respondText(BeObj(hashMapOf("failReason" to errorMsg)).toBenStr())
+            return@get
         }
-        ip="192.168.0.112"
-        val peer = Peer(ip!!, port, peerId)
-        var arrayList = peerMap[infoHash]
-        if (arrayList == null) {
-            arrayList = mutableListOf()
-            peerMap[infoHash] = arrayList
+
+        // 1. 检查用户是否有当前种子的权限
+        val userTorrentDO =
+            database.userTorrentDO.findLast { (it.authKey eq trackerReq.authKey) and (it.infoHash eq trackerReq.infoHash) }
+        if (userTorrentDO == null) {
+            call.respondText(BeObj(hashMapOf("failReason" to "你还没有下载这个种子无法开始下载")).toBenStr())
+            return@get
         }
-        arrayList.add(peer)
 
-        val resp = hashMapOf<BeStr, BeObj>()
-        resp[BeStr("interval")] = BeInt(3600)
-        resp[BeStr("min interval")] = BeInt(30)
-        resp[BeStr("incomplete")] = BeInt(0)
-        resp[BeStr("complete")] = BeInt(1)
+        // 2. 找出符合的peer返回
+        val peers = database.peerDO.filter {
+            (it.infoHash eq trackerReq.infoHash) and (it.event inList listOf(
+                "completed",
+                "started",
+                "empty"
+            ))
+        }.map { it }
 
-        val map = arrayList.filter { it.ip != ip }.map { getCompactPeer(ip, port) }
-            .flatMap { it.toList() }.toByteArray()
-
-        resp[BeStr("peers")] = BeStr(String(map))
-
-        call.respondText(BeMap(resp).toBenStr())
+        // 2.1 找出本机peer
+        var peer: PeerDO? = peers.findLast { it.userId == userTorrentDO.userId }
+        if (peer == null) {
+            peer = PeerDO.build(trackerReq, userTorrentDO.userId)
+            database.peerDO.add(peer)
+        } else {
+            if (peer.peerId != trackerReq.peerId) {
+                call.respondText(BeObj(hashMapOf("failReason" to "一个种子只能一个客户端下载")).toBenStr())
+                return@get
+            }
+        }
+        //2.2 返回数据
+        val peersStr = peers.filter { it.peerId != peer.peerId }.map { getCompactPeer(it.ip, it.port) }
+            .joinToString(separator = "")
+        val resp = hashMapOf<String, Any>()
+        resp["interval"] = 3600
+        resp["min interval"] = 30
+        resp["incomplete"] = 0
+        resp["complete"] = 1
+        resp["peers"] = peersStr
+        call.respondText(BeObj(resp).toBenStr())
     }
 
 }
@@ -80,9 +93,21 @@ fun getCompactPeer(ip: String, port: Int): ByteArray {
 }
 
 
-const val UNKNOWN = "unknown";
+fun blockBrowser(request: ApplicationRequest): String? {
+    val userAgent = request.userAgent()
+    if (userAgent != null) {
+        val acceptUserAgent = userAgent.contains("/^Mozilla/") || userAgent.contains("/^Opera/")
+                || userAgent.contains("/^Links/") || userAgent.contains("/^Lynx/")
+        if (acceptUserAgent) {
+            return "Browser access blocked!"
+        }
+    }
+    return null
+}
+
 
 fun getIpAddress(request: ApplicationRequest): String? {
+    val UNKNOWN = "unknown";
     val LOCALHOST = "127.0.0.1"
     var ipAddress = request.header("x-forwarded-for")
     if (ipAddress == null || ipAddress.isEmpty() || UNKNOWN != ipAddress) {
