@@ -65,6 +65,14 @@ fun Route.announce() {
             if (peer.peerId != trackerReq.peerId) {
                 call.respondText(BeObj(hashMapOf("failReason" to "一个种子只能一个客户端下载")).toBenStr())
                 return@get
+            } else {
+                peer.downloaded = trackerReq.downloaded
+                peer.uploaded = trackerReq.uploaded
+                peer.left = trackerReq.left
+                peer.event = trackerReq.event
+                peer.compact = trackerReq.compact
+                peer.lastReportTime = LocalDateTime.now()
+                database.peerDO.update(peer)
             }
         }
         //2.2 返回数据
