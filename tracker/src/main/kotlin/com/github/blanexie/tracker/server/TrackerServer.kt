@@ -2,23 +2,18 @@ package com.github.blanexie.tracker.server
 
 import com.github.blanexie.dao.*
 import com.github.blanexie.tracker.bencode.BeObj
-import com.zaxxer.hikari.HikariConfig
-import com.zaxxer.hikari.HikariDataSource
 import io.ktor.application.*
 import io.ktor.features.*
 import io.ktor.request.*
 import io.ktor.response.*
 import io.ktor.routing.*
-import io.ktor.util.Identity.decode
 import io.ktor.utils.io.*
-import org.ktorm.database.Database
 import org.ktorm.dsl.and
 import org.ktorm.dsl.eq
 import org.ktorm.dsl.inList
 import org.ktorm.entity.*
-import java.net.InetAddress
-
 import org.slf4j.LoggerFactory
+import java.net.InetAddress
 import java.time.LocalDateTime
 import java.util.*
 
@@ -141,7 +136,6 @@ fun getIpAddress(request: ApplicationRequest): String? {
             ipAddress = inet!!.hostAddress
         }
     }
-
 
     // 对于通过多个代理的情况，第一个IP为客户端真实IP,多个IP按照','分割
     // "***.***.***.***".length()
