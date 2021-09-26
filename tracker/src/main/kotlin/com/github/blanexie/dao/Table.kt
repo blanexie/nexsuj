@@ -48,7 +48,6 @@ interface TorrentInfoDO : Entity<TorrentInfoDO> {
     var pieces: Long
     var length: Long
     var private: Int
-    var source: String
     var files: String
 
 }
@@ -60,7 +59,6 @@ object TorrentInfo : Table<TorrentInfoDO>("torrent_info") {
     var pieces = long("pieces").bindTo { it.pieces }
     var length = long("length").bindTo { it.length }
     var private = int("private").bindTo { it.private }
-    var source = varchar("source").bindTo { it.source }
     var files = text("files").bindTo { it.files }
 }
 
@@ -83,11 +81,12 @@ interface PeerDO : Entity<PeerDO> {
             peer.event = trackerReq.event
             peer.ip = trackerReq.ip
             peer.numwant = trackerReq.numwant
+
+            peer.authKey = trackerReq.authKey
             peer.trackerid = trackerReq.trackerId
             peer.createTime = LocalDateTime.now()
             peer.userId = userId
             peer.lastReportTime = LocalDateTime.now()
-            peer.authKey = trackerReq.authKey
             return peer
         }
     }
@@ -142,11 +141,13 @@ interface TorrentDO : Entity<TorrentDO> {
     var annnounce: String
     var createDate: LocalDateTime
     var uploadTime: LocalDateTime
-    var userId: Int
+
     var createBy: String?
     var comment: String?
     var encoding: String?
+
     var status: Int
+    var userId: Int
 
 }
 
