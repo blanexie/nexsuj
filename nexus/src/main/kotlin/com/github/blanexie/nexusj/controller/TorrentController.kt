@@ -1,16 +1,15 @@
 package com.github.blanexie.nexusj.controller
 
-
-/**
- *
- */
-class TorrentController {
+import io.ktor.application.*
+import io.ktor.response.*
+import io.ktor.routing.*
 
 
+fun Route.nexusj() {
     /**
      * 上传种子文件
      */
-    fun uploadTorrent() {
-
+    get("upload") {
+        call.respondText { "hello word" }
     }
 }

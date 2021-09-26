@@ -21,7 +21,7 @@ import java.util.*
 val log = LoggerFactory.getLogger("announce")!!
 
 
-fun Route.announce() {
+fun Route.tracker() {
 
     get("announce") {
 
