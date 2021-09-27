@@ -22,6 +22,7 @@ import org.ktorm.dsl.eq
 import org.ktorm.entity.*
 import java.nio.ByteBuffer
 import java.time.LocalDateTime
+import kotlin.reflect.KClass
 
 
 fun Route.nexusj() {
@@ -31,7 +32,7 @@ fun Route.nexusj() {
      */
     get("/logout") {
         call.sessions.clear("user")
-        call.respond(Result())
+        call.respond(Result<String>())
     }
 
     /**
@@ -42,16 +43,16 @@ fun Route.nexusj() {
         //TODO 判断验证码是否正确， 判断昵称和邮箱是否已经存在
         val userDO = UserDO()
         userDO.createTime = LocalDateTime.now()
-        userDO.email = signUpParam.email
-        userDO.pwd = signUpParam.pwd
-        userDO.nick = signUpParam.nick
-        userDO.sex = signUpParam.sex
+        userDO.email = signUpParam.email!!
+        userDO.pwd = signUpParam.pwd!!
+        userDO.nick = signUpParam.nick!!
+        userDO.sex = signUpParam.sex!!
         userDO.status = 0
         userDO.updateTime = LocalDateTime.now()
         userDO.authKey = IdUtil.fastSimpleUUID()
         database.userDO.add(userDO)
         userDO.pwd = ""
-        call.respond(userDO)
+        call.respond(Result<UserDO>(body = userDO))
     }
     /**
      * 登录
@@ -59,14 +60,14 @@ fun Route.nexusj() {
     post("/login") {
         val loginParam = call.receive<UserQuery>()
         val userDOs = database.userDO
-            .filter { (it.pwd eq loginParam.pwd) and (it.email eq loginParam.email) }
+            .filter { (it.pwd eq loginParam.pwd!!) and (it.email eq loginParam.email!!) }
             .map { it }
         if (userDOs.isEmpty()) {
-            call.respond(Result(403, "登录失败"))
+            call.respond(Result<String>(403, "登录失败"))
             return@post
         }
         call.sessions.set("user", userDOs[0])
-        call.respond(Result())
+        call.respond(Result<String>())
         return@post
     }
 
@@ -105,7 +106,7 @@ fun Route.nexusj() {
         torrent.description = reqMap["description"] as String
         database.torrentDO.add(torrent)
 
-        call.respond(Result())
+        call.respond(Result<String>())
     }
 
 
@@ -119,7 +120,7 @@ fun Route.nexusj() {
         val torrentDO = database.torrentDO.first { it.pieces eq infoHash }
 
         if (torrentDO == null) {
-            call.respond(Result(code = 404, message = "下载的种子不存在"))
+            call.respond(Result<String>(code = 404, message = "下载的种子不存在"))
             return@post
         }
         //增加一条userTorrent记录
@@ -146,4 +147,3 @@ fun Route.nexusj() {
     }
 
 }
-

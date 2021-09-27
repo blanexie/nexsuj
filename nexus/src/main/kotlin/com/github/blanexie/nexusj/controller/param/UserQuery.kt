@@ -1,7 +1,6 @@
 package com.github.blanexie.nexusj.controller.param
 
 import kotlinx.serialization.Serializable
-import java.time.LocalDateTime
 
 
 /**
@@ -9,14 +8,14 @@ import java.time.LocalDateTime
  */
 @Serializable
 data class UserQuery(
-    var id: Int,
-    var email: String,
-    var pwd: String,
-    var nick: String,
-    var sex: Int,
-    var createTime: LocalDateTime,
-    var updateTime: LocalDateTime,
-    var authKey: String,
-    var status: Int,
-    var code: String, //邮箱收到的验证码
+    var id: Int? = null,
+    var email: String? = null,
+    var pwd: String? = null,
+    var nick: String? = null,
+    var sex: Int? = null,
+    var code: String? = null, //邮箱收到的验证码
+    var createTime: Long? = null,
+    var updateTime: Long? = null,
+    var authKey: String? = null,
+    var status: Int? = null,
 )

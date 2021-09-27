@@ -13,18 +13,17 @@ application {
 
 dependencies {
 
-    implementation 'com.alibaba:fastjson:1.2.78'
-    compile "io.ktor:ktor-serialization:1.6.3"
+    compile 'com.alibaba:fastjson:1.2.78'
+
     compile 'org.ktorm:ktorm-core:3.4.1'
     compile 'com.zaxxer:HikariCP:5.0.0'
     compile group: 'mysql', name: 'mysql-connector-java', version: '8.0.26'
 
-    compile "io.ktor:ktor-server-core:1.6.3"
-    compile "io.ktor:ktor-server-netty:1.6.3"
+    compile "io.ktor:ktor-serialization:$ktor_version"
+    compile "io.ktor:ktor-server-core:$ktor_version"
+    compile "io.ktor:ktor-server-netty:$ktor_version"
 
     compile "ch.qos.logback:logback-classic:1.2.5"
-
-    compile 'io.ktor:ktor-gson:1.6.3'
 
     implementation "org.jetbrains.kotlin:kotlin-stdlib"
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.0'

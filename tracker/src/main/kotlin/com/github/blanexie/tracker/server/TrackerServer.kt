@@ -23,7 +23,7 @@ val log = LoggerFactory.getLogger("announce")!!
 
 fun Route.tracker() {
 
-    get("announce") {
+    get("/announce") {
 
         val trackerReq = TrackerReq(call.request)
 

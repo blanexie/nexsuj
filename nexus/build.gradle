@@ -1,7 +1,8 @@
 plugins {
     id 'java'
     id 'kotlin'
-    id 'org.jetbrains.kotlin.jvm'  
+    id 'org.jetbrains.kotlin.jvm'
+    id("org.jetbrains.kotlin.plugin.serialization") version("$kotlin_version")
 }
 
 group 'com.github.blanexie'
@@ -11,6 +12,8 @@ version '1.0-SNAPSHOT'
 dependencies {
 
     implementation project(":tracker")
+
+    implementation "io.ktor:ktor-server-sessions:$ktor_version"
 
     implementation "org.jetbrains.kotlin:kotlin-stdlib"
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.0'
