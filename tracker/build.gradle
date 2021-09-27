@@ -13,6 +13,8 @@ application {
 
 dependencies {
 
+    implementation 'com.alibaba:fastjson:1.2.78'
+    compile "io.ktor:ktor-serialization:1.6.3"
     compile 'org.ktorm:ktorm-core:3.4.1'
     compile 'com.zaxxer:HikariCP:5.0.0'
     compile group: 'mysql', name: 'mysql-connector-java', version: '8.0.26'

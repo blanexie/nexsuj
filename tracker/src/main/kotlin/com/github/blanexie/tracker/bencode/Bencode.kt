@@ -1,19 +1,20 @@
 package com.github.blanexie.tracker.bencode
 
+import com.github.blanexie.dao.TorrentDO
 import java.nio.ByteBuffer
 
 
-internal fun toBeMap(torrent: Torrent): BeObj {
+fun toBeMap(torrent: TorrentDO): BeObj {
     val beMap = hashMapOf<String, Any>()
     beMap["announce"] = torrent.announce
-    torrent.comment?.let {
-        beMap["comment"] = it
-    }
     torrent.announceList?.let { it ->
         beMap["announce-list"] = it
     }
     torrent.createdBy?.let {
         beMap["created by"] = it
+    }
+    torrent.comment?.let {
+        beMap["comment"] = it
     }
     torrent.creationDate?.let {
         beMap["creation date"] = it
@@ -21,16 +22,28 @@ internal fun toBeMap(torrent: Torrent): BeObj {
     torrent.encoding?.let {
         beMap["encoding"] = it
     }
-    beMap["info"] = infoToMap(torrent.info)
+
+    val infoMap = hashMapOf<String, Any>()
+    infoMap["pieces"] = torrent.pieces
+    infoMap["piece length"] = torrent.pieceLength
+    infoMap["name"] = torrent.name
+    //单文件
+    if (torrent.length != null) {
+        infoMap["length"] = torrent.length!!
+    } else {
+        infoMap["files"] = torrent.files!!
+    }
+    infoMap["private"] = torrent.private
+    beMap["info"] = infoMap
     return BeObj(beMap)
 }
 
-internal fun toTorrent(byteBuffer: ByteBuffer): Torrent {
+fun toTorrent(byteBuffer: ByteBuffer): TorrentDO {
     val beObj = toBeObj(byteBuffer)
     return toTorrent(beObj)
 }
 
-internal fun toTorrent(beMap: BeObj): Torrent {
+fun toTorrent(beMap: BeObj): TorrentDO {
     if (beMap.type != BeType.BeMap) {
         throw Exception("BeMap类型才能生成种子文件")
     }
@@ -42,42 +55,61 @@ internal fun toTorrent(beMap: BeObj): Torrent {
     val creationDate = beMapData["creation date"] as Long?
     val createdBy = beMapData["created by"]?.toString()
     val encoding = beMapData["encoding"]?.toString()
+
     //开始处理Info中字段
-    val infoMap = beMapData.get("info")!! as Map<String, Any>
-    val info = mapToInfo(infoMap)
-    return Torrent(announce, info, announceList, comment, createdBy, creationDate, encoding)
-}
+    val infoMap = beMapData["info"] as Map<String, Any>
 
-
-private fun mapToInfo(infoMap: Map<String, Any>): Info {
     val name = infoMap["name"]!!.toString()
     val pieces = infoMap["pieces"]!!.toString()
     val pieceLength = infoMap["piece length"]!! as Long
 
+    val private = infoMap["private"] as Int
     //开始处理单文件和多文件
     val length = infoMap["length"] as Long?
-    if (length != null) {
-        val private = infoMap["private"] as Long?
-        val source = infoMap["source"]?.toString()
-        val publisher = infoMap["publisher"]?.toString()
-        val publisherUrl = infoMap["publisher-url"]?.toString()
-        return Info(name, pieceLength, pieces, length, null, private, source, publisher, publisherUrl)
-    } else {
-        val filesMap = infoMap["files"] as List<*>
-        val files = filesMap.map { it as Map<*, *> }
-            .map {
-                val paths = it["path"] as List<String>
-                val length = it["length"] as Long
-                FileBt(paths, length)
-            }
-        return Info(name, pieceLength, pieces, length, files)
-    }
+    val files = infoMap["files"] as List<Map<String, Any>>?
+
+    return buildTorrent(
+        announce, announceList, createdBy, comment, creationDate, encoding,
+        name, pieces, pieceLength, length, private, files
+    )
+}
+
+
+private fun buildTorrent(
+    announce: String,
+    announceList: List<String>?,
+    createdBy: String?,
+    comment: String?,
+    creationDate: Long?,
+    encoding: String?,
+
+    name: String,
+    pieces: String,
+    pieceLength: Long,
+    length: Long?,
+    private: Int,
+    files: List<Map<String, Any>>?
+): TorrentDO {
+    val torrentDO = TorrentDO()
+    torrentDO.announce = announce
+    torrentDO.announceList = announceList
+    torrentDO.createdBy = createdBy
+    torrentDO.comment = comment
+    torrentDO.creationDate = creationDate
+    torrentDO.encoding = encoding
+    torrentDO.name = name
+    torrentDO.pieces = pieces
+    torrentDO.pieceLength = pieceLength
+    torrentDO.length = length
+    torrentDO.private = private
+    torrentDO.files = files
+    return torrentDO
 }
 
 /**
  * 解码操作方法, 将种子文件转换成定义的BeMap对象
  */
-internal fun toBeObj(byteBuffer: ByteBuffer): BeObj {
+private fun toBeObj(byteBuffer: ByteBuffer): BeObj {
     val byte = byteBuffer.get(byteBuffer.position())
     if (byte.toInt().toChar() == 'i') {
         return decodeInt(byteBuffer)
@@ -147,38 +179,5 @@ private fun decodeInt(byteBuffer: ByteBuffer): BeObj {
         } else {
             bytes.add(byte)
         }
-    }
-}
-
-private fun infoToMap(info: Info): Map<String, Any> {
-    val infoMap = hashMapOf<String, Any>()
-    infoMap["pieces"] = info.pieces
-    infoMap["piece length"] = info.pieceLength
-    infoMap["name"] = info.name
-
-    //单文件
-    if (info.length != null) {
-        infoMap["length"] = info.length!!
-    } else {
-        infoMap["files"] = fileBtToMap(info.files!!)
-    }
-    info.publisherUrl?.let {
-        infoMap["publisher-url"] = it
-    }
-    info.publisher?.let {
-        infoMap["publisher"] = it
-    }
-    info.source?.let {
-        infoMap["source"] = it
-    }
-    info.private?.let {
-        infoMap["private"] = it
-    }
-    return infoMap
-}
-
-private fun fileBtToMap(files: List<FileBt>): List<Map<String, Any>> {
-    return files!!.map { it ->
-        hashMapOf("length" to it.length!!, "path" to it.path!!)
     }
 }

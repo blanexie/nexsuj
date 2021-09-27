@@ -13,6 +13,17 @@
 
 https://blog.csdn.net/u010087886/article/details/46829793
 
+
+## 接口
+### announce接口
+GET /announce
+请求参数：
+
+info_hash: Info键值的20字节SHA杂凑值.
+
+
+
+
 BEP：10 Extension Protocol
 关于扩展的扩展协议
 
