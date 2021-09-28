@@ -123,6 +123,10 @@ private fun toBeObj(byteBuffer: ByteBuffer): BeObj {
     return decodeStr(byteBuffer)
 }
 
+fun Byte.asChar(): Char {
+    return this.toInt().toChar()
+}
+
 private fun decodeMap(byteBuffer: ByteBuffer): BeObj {
     byteBuffer.get()
     val map = mutableMapOf<String, Any>()
@@ -131,7 +135,7 @@ private fun decodeMap(byteBuffer: ByteBuffer): BeObj {
         val value = toBeObj(byteBuffer)
         map[key.getValue() as String] = value.getValue()
         val byte = byteBuffer.get(byteBuffer.position())
-        if (byte.toChar() == 'e') {
+        if (byte.asChar() == 'e') {
             byteBuffer.get()
             return BeObj(map)
         }
@@ -145,7 +149,7 @@ private fun decodeList(byteBuffer: ByteBuffer): BeObj {
         val beObj = toBeObj(byteBuffer)
         value.add(beObj.getValue())
         val byte = byteBuffer.get(byteBuffer.position())
-        if (byte.toChar() == 'e') {
+        if (byte.asChar() == 'e') {
             byteBuffer.get()
             return BeObj(value)
         }
@@ -156,7 +160,7 @@ private fun decodeStr(byteBuffer: ByteBuffer): BeObj {
     val bytes = arrayListOf<Byte>()
     while (true) {
         val byte = byteBuffer.get()
-        if (byte.toChar() == ':') {
+        if (byte.asChar() == ':') {
             val string = String(bytes.toByteArray())
             var length = string.toInt()
             val data = ByteArray(length)
@@ -173,7 +177,7 @@ private fun decodeInt(byteBuffer: ByteBuffer): BeObj {
     val bytes = arrayListOf<Byte>()
     while (true) {
         val byte = byteBuffer.get()
-        if (byte.toChar() == 'e') {
+        if (byte.asChar() == 'e') {
             val toInt = String(bytes.toByteArray()).toLong()
             return BeObj(toInt)
         } else {

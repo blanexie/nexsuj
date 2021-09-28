@@ -4,36 +4,25 @@ import cn.hutool.core.util.IdUtil
 import com.github.blanexie.dao.*
 import com.github.blanexie.nexusj.controller.param.Result
 import com.github.blanexie.nexusj.controller.param.UserQuery
+import com.github.blanexie.nexusj.support.UserPrincipal
+import com.github.blanexie.nexusj.support.jwtSign
 import com.github.blanexie.tracker.bencode.toBeMap
 import com.github.blanexie.tracker.bencode.toTorrent
 import io.ktor.application.*
-import io.ktor.http.*
+import io.ktor.auth.*
 import io.ktor.http.content.*
 import io.ktor.request.*
 import io.ktor.response.*
-import io.ktor.response.respondText
 import io.ktor.routing.*
 import io.ktor.sessions.*
-import io.ktor.util.reflect.*
-import io.ktor.utils.io.jvm.javaio.*
-import kotlinx.serialization.Serializable
 import org.ktorm.dsl.and
 import org.ktorm.dsl.eq
-import org.ktorm.entity.*
+import org.ktorm.entity.add
+import org.ktorm.entity.first
 import java.nio.ByteBuffer
 import java.time.LocalDateTime
-import kotlin.reflect.KClass
 
-
-fun Route.nexusj() {
-
-    /**
-     * 退出登录
-     */
-    get("/logout") {
-        call.sessions.clear("user")
-        call.respond(Result<String>())
-    }
+fun Route.notAuth() {
 
     /**
      * 注册
@@ -52,38 +41,42 @@ fun Route.nexusj() {
         userDO.authKey = IdUtil.fastSimpleUUID()
         database.userDO.add(userDO)
         userDO.pwd = ""
-        call.respond(Result<UserDO>(body = userDO))
+        call.respond(Result(body = mapOf("user" to userDO)))
     }
+
     /**
      * 登录
      */
     post("/login") {
         val loginParam = call.receive<UserQuery>()
-        val userDOs = database.userDO
-            .filter { (it.pwd eq loginParam.pwd!!) and (it.email eq loginParam.email!!) }
-            .map { it }
-        if (userDOs.isEmpty()) {
-            call.respond(Result<String>(403, "登录失败"))
+        val userDO = database.userDO
+            .first { (it.pwd eq loginParam.pwd!!) and (it.email eq loginParam.email!!) }
+        if (userDO == null) {
+            call.respond(Result(403, "登录失败"))
             return@post
         }
-        call.sessions.set("user", userDOs[0])
-        call.respond(Result<String>())
+        val token = call.application.jwtSign(userDO.id)
+        call.respond(Result(body = mapOf("token" to token)))
         return@post
     }
 
+}
+
+
+fun Route.auth() {
 
     /**
      * 上传种子文件
      */
     post("/upload/torrent") {
-        val user = call.sessions.get("user") as UserDO
-        val multipartData = call.receiveMultipart()
+        val principal = call.authentication.principal<UserPrincipal>()!!
+        val user = principal.user!!
 
+        val multipartData = call.receiveMultipart()
         val reqMap = hashMapOf<String, Any>()
         multipartData.forEachPart { partData ->
             when (partData) {
                 is PartData.FileItem -> {
-
                     val torrent = toTorrent(ByteBuffer.wrap(partData.streamProvider().readBytes()))
                     reqMap["torrent"] = torrent
                 }
@@ -106,7 +99,7 @@ fun Route.nexusj() {
         torrent.description = reqMap["description"] as String
         database.torrentDO.add(torrent)
 
-        call.respond(Result<String>())
+        call.respond(Result())
     }
 
 
@@ -114,13 +107,14 @@ fun Route.nexusj() {
      * 下载种子文件
      */
     post("/download/torrent") {
-        val user = call.sessions.get("user") as UserDO
+        val principal = call.authentication.principal<UserPrincipal>()!!
+        val user = principal.user!!
 
         val infoHash = call.request.queryParameters["infoHash"].toString()
         val torrentDO = database.torrentDO.first { it.pieces eq infoHash }
 
         if (torrentDO == null) {
-            call.respond(Result<String>(code = 404, message = "下载的种子不存在"))
+            call.respond(Result(code = 404, message = "下载的种子不存在"))
             return@post
         }
         //增加一条userTorrent记录
@@ -143,7 +137,7 @@ fun Route.nexusj() {
         val toBeMap = toBeMap(torrentDO)
 
         //返回
-        call.respond(Result(body = toBeMap.toBenStr()))
+        call.respond(Result(body = mapOf("torrent" to toBeMap.toBenStr())))
     }
 
 }

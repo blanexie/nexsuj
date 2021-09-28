@@ -1,5 +1,4 @@
 plugins {
-    id 'java'
     id 'kotlin'
     id 'application'
 }
@@ -13,15 +12,17 @@ application {
 
 dependencies {
 
-    compile 'com.alibaba:fastjson:1.2.78'
-
-    compile 'org.ktorm:ktorm-core:3.4.1'
+    compile 'org.ktorm:ktorm-core:${ktorm_version}'
     compile 'com.zaxxer:HikariCP:5.0.0'
-    compile group: 'mysql', name: 'mysql-connector-java', version: '8.0.26'
+    compile 'mysql:mysql-connector-java:8.0.26'
+    compile "org.ktorm:ktorm-support-mysql:${ktorm_version}"
 
-    compile "io.ktor:ktor-serialization:$ktor_version"
+
+    compile "io.ktor:ktor-gson:$ktor_version"
     compile "io.ktor:ktor-server-core:$ktor_version"
     compile "io.ktor:ktor-server-netty:$ktor_version"
+
+    testCompile "io.ktor:ktor-server-tests:$ktor_version"
 
     compile "ch.qos.logback:logback-classic:1.2.5"
 

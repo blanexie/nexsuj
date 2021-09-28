@@ -1,12 +1,10 @@
 package com.github.blanexie.nexusj.controller.param
 
-import kotlinx.serialization.Serializable
 
 
 /**
  * 注册对象
  */
-@Serializable
 data class UserQuery(
     var id: Int? = null,
     var email: String? = null,

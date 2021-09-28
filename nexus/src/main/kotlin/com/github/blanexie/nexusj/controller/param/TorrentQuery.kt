@@ -1,9 +1,7 @@
 package com.github.blanexie.nexusj.controller.param
 
 import com.github.blanexie.dao.TorrentDO
-import kotlinx.serialization.Serializable
 
-@Serializable
 data class TorrentQuery(
     val torrentDO: TorrentDO,    // 种子
     val type: String,            //	分类

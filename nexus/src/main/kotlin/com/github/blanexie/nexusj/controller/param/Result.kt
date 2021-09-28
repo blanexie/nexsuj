@@ -1,6 +1,6 @@
 package com.github.blanexie.nexusj.controller.param
 
-import kotlinx.serialization.Serializable
+import com.github.blanexie.dao.UserDO
 
-@Serializable
-data class Result<T>(val code: Int = 200, val message: String = "", val body: T? = null)
+
+data class Result(val code: Int = 200, val message: String = "", val body: Map<String, Any>? = null)
