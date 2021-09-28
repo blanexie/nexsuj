@@ -1,7 +1,10 @@
 package com.github.blanexie.tracker.bencode
 
+import cn.hutool.core.codec.Base64
+import cn.hutool.core.util.HexUtil
 import com.github.blanexie.dao.TorrentDO
 import java.nio.ByteBuffer
+import java.util.*
 
 
 fun toBeMap(torrent: TorrentDO): BeObj {
@@ -60,17 +63,17 @@ fun toTorrent(beMap: BeObj): TorrentDO {
     val infoMap = beMapData["info"] as Map<String, Any>
 
     val name = infoMap["name"]!!.toString()
-    val pieces = infoMap["pieces"]!!.toString()
+    val pieces = infoMap["pieces"].toString()!!
     val pieceLength = infoMap["piece length"]!! as Long
 
-    val private = infoMap["private"] as Int
+    val private = infoMap["private"] as Long
     //开始处理单文件和多文件
     val length = infoMap["length"] as Long?
     val files = infoMap["files"] as List<Map<String, Any>>?
 
     return buildTorrent(
         announce, announceList, createdBy, comment, creationDate, encoding,
-        name, pieces, pieceLength, length, private, files
+        name, pieces, pieceLength, length, private.toInt(), files
     )
 }
 
@@ -109,7 +112,7 @@ private fun buildTorrent(
 /**
  * 解码操作方法, 将种子文件转换成定义的BeMap对象
  */
-private fun toBeObj(byteBuffer: ByteBuffer): BeObj {
+ fun toBeObj(byteBuffer: ByteBuffer): BeObj {
     val byte = byteBuffer.get(byteBuffer.position())
     if (byte.toInt().toChar() == 'i') {
         return decodeInt(byteBuffer)

@@ -206,7 +206,7 @@ object Torrent : Table<TorrentDO>("torrent") {
     var status = int("status").bindTo { it.status }
     var uploadTime = datetime("upload_time").bindTo { it.uploadTime }
 
-    var type = varchar("type").bindTo { it.title }
+    var type = varchar("type").bindTo { it.type }
     var labels = json<List<String>>("labels").bindTo { it.labels }
     var title = varchar("title").bindTo { it.title }
     var description = varchar("description").bindTo { it.description }
