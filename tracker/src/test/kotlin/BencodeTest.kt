@@ -13,7 +13,6 @@ class BencodeTest {
         val wrap = ByteBuffer.wrap(value.toByteArray())
         val beObj = toBeObj(wrap)
         assert(beObj.type == BeType.BeInt)
-        assert(beObj.toBenStr() == value)
         assert(beObj.getValue() == value.substring(1, value.length - 1).toLong())
     }
 
@@ -23,7 +22,6 @@ class BencodeTest {
         val wrap = ByteBuffer.wrap(value.toByteArray())
         val beObj = toBeObj(wrap)
         assert(beObj.type == BeType.BeStr)
-        assert(beObj.toBenStr() == value)
         assert(beObj.getValue() == value.substring(3, value.length))
     }
 
@@ -36,8 +34,7 @@ class BencodeTest {
         assert(pair.type == BeType.BeList)
 
         val list = pair.getValue() as List<*>
-        val toStr = pair.toBenStr()
-        assert(toStr == value)
+        val toStr = pair.toBen()
 
         assert(wrap.position() == 19)
 
@@ -55,8 +52,7 @@ class BencodeTest {
         assert(pair.type == BeType.BeMap)
 
         val map = pair.getValue() as Map<String, Any>
-        val toStr = pair.toBenStr()
-        assert(toStr == value)
+        val toStr = pair.toBen()
         assert(map.size == 2)
 
         assert(wrap.position() == 28)
@@ -75,16 +71,12 @@ class BencodeTest {
 
     @Test
     fun beTorrent() {
-        val classPathResource = ClassPathResource("mutableFiles.torrent")
+        val classPathResource = ClassPathResource("ccc.torrent")
         val readBytes = classPathResource.readBytes()
         val wrap = ByteBuffer.wrap(readBytes)
         val benDecode = toBeObj(wrap)
         assert(wrap.position() == readBytes.size)
 
-        val torrent = toTorrent(benDecode)
-
-        val toBeMap = toBeMap(torrent)
-        println(toBeMap)
 
     }
 

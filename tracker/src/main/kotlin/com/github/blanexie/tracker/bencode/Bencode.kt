@@ -8,11 +8,13 @@ import java.util.*
 
 
 fun toBeMap(torrent: TorrentDO): BeObj {
-    val beMap = hashMapOf<String, Any>()
+    val beMap = hashMapOf<String, Any?>()
     beMap["announce"] = torrent.announce
-    torrent.announceList?.let { it ->
+
+    torrent.announceList.let {
         beMap["announce-list"] = it
     }
+
     torrent.createdBy?.let {
         beMap["created by"] = it
     }
@@ -27,7 +29,10 @@ fun toBeMap(torrent: TorrentDO): BeObj {
     }
 
     val infoMap = hashMapOf<String, Any>()
-    infoMap["pieces"] = torrent.pieces
+    val decodeHex = HexUtil.decodeHex(torrent.pieces)
+    infoMap["pieces"] = ByteArray(decodeHex.size)
+    //todo
+
     infoMap["piece length"] = torrent.pieceLength
     infoMap["name"] = torrent.name
     //单文件
@@ -63,13 +68,14 @@ fun toTorrent(beMap: BeObj): TorrentDO {
     val infoMap = beMapData["info"] as Map<String, Any>
 
     val name = infoMap["name"]!!.toString()
-    val pieces = infoMap["pieces"].toString()!!
+    val pieces = HexUtil.encodeHex(infoMap["pieces"] as ByteArray).toString()
     val pieceLength = infoMap["piece length"]!! as Long
 
     val private = infoMap["private"] as Long
     //开始处理单文件和多文件
     val length = infoMap["length"] as Long?
     val files = infoMap["files"] as List<Map<String, Any>>?
+
 
     return buildTorrent(
         announce, announceList, createdBy, comment, creationDate, encoding,
@@ -112,7 +118,7 @@ private fun buildTorrent(
 /**
  * 解码操作方法, 将种子文件转换成定义的BeMap对象
  */
- fun toBeObj(byteBuffer: ByteBuffer): BeObj {
+fun toBeObj(byteBuffer: ByteBuffer): BeObj {
     val byte = byteBuffer.get(byteBuffer.position())
     if (byte.toInt().toChar() == 'i') {
         return decodeInt(byteBuffer)
@@ -136,7 +142,7 @@ private fun decodeMap(byteBuffer: ByteBuffer): BeObj {
     while (true) {
         val key = toBeObj(byteBuffer)
         val value = toBeObj(byteBuffer)
-        map[key.getValue() as String] = value.getValue()
+        map[key.toString()] = value.getValue()
         val byte = byteBuffer.get(byteBuffer.position())
         if (byte.asChar() == 'e') {
             byteBuffer.get()
@@ -168,7 +174,7 @@ private fun decodeStr(byteBuffer: ByteBuffer): BeObj {
             var length = string.toInt()
             val data = ByteArray(length)
             byteBuffer.get(data)
-            return BeObj(String(data))
+            return BeObj(data)
         } else {
             bytes.add(byte)
         }

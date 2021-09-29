@@ -1,7 +1,6 @@
 package com.github.blanexie.nexusj.controller
 
 import cn.hutool.core.util.IdUtil
-import cn.hutool.json.JSONUtil
 import com.github.blanexie.dao.*
 import com.github.blanexie.nexusj.controller.param.Result
 import com.github.blanexie.nexusj.controller.param.UserQuery
@@ -25,7 +24,6 @@ import org.ktorm.entity.first
 import org.ktorm.entity.firstOrNull
 import java.nio.ByteBuffer
 import java.time.LocalDateTime
-import kotlin.text.toByteArray
 
 fun Route.notAuth() {
 
@@ -63,7 +61,7 @@ fun Route.notAuth() {
         torrentDO.announce = "${propsDO.value}?auth_key=${userTorrentDO.authKey}"
         torrentDO.announceList = null
         val toBeMap = toBeMap(torrentDO)
-        val toBenStr = toBeMap.toBenStr()
+        val toBenStr = toBeMap.toBen()
         //返回
         call.respondBytes(
             bytes = toBenStr.toByteArray(),

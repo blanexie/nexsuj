@@ -7,7 +7,6 @@ import io.ktor.features.*
 import io.ktor.request.*
 import io.ktor.response.*
 import io.ktor.routing.*
-import io.ktor.utils.io.*
 import org.ktorm.dsl.and
 import org.ktorm.dsl.eq
 import org.ktorm.dsl.inList
@@ -15,7 +14,6 @@ import org.ktorm.entity.*
 import org.slf4j.LoggerFactory
 import java.net.InetAddress
 import java.time.LocalDateTime
-import java.util.*
 
 
 val log = LoggerFactory.getLogger("announce")!!
@@ -30,7 +28,7 @@ fun Route.tracker() {
         // 0. 检查访问的客户端是否符合要求
         val errorMsg = blockBrowser(call.request)
         if (errorMsg != null) {
-            call.respondText(BeObj(hashMapOf("failReason" to errorMsg)).toBenStr())
+            call.respond(BeObj(hashMapOf("failReason" to errorMsg)).toBen())
             return@get
         }
 
@@ -38,7 +36,7 @@ fun Route.tracker() {
         val userTorrentDO =
             database.userTorrentDO.findLast { (it.authKey eq trackerReq.authKey) and (it.infoHash eq trackerReq.infoHash) }
         if (userTorrentDO == null) {
-            call.respondText(BeObj(hashMapOf("failReason" to "你还没有下载这个种子无法开始下载")).toBenStr())
+            call.respond(BeObj(hashMapOf("failReason" to "你还没有下载这个种子无法开始下载")).toBen())
             return@get
         }
 
@@ -58,7 +56,7 @@ fun Route.tracker() {
             database.peerDO.add(peer)
         } else {
             if (peer.peerId != trackerReq.peerId) {
-                call.respondText(BeObj(hashMapOf("failReason" to "一个种子只能一个客户端下载")).toBenStr())
+                call.respond(BeObj(hashMapOf("failReason" to "一个种子只能一个客户端下载")).toBen())
                 return@get
             } else {
                 peer.downloaded = trackerReq.downloaded
@@ -79,7 +77,7 @@ fun Route.tracker() {
         resp["incomplete"] = 0
         resp["complete"] = 1
         resp["peers"] = peersStr
-        call.respondText(BeObj(resp).toBenStr())
+        call.respond(BeObj(resp).toBen())
     }
 
 }

@@ -7,38 +7,50 @@ class BeObj(private val obj: Any) {
     var type: BeType? = null
 
     init {
-        when (obj) {
+        type = when (obj) {
             is Number -> {
-                type = BeType.BeInt
+                BeType.BeInt
+            }
+            is ByteArray -> {
+                BeType.BeByte
             }
             is String -> {
-                type = BeType.BeStr
+                BeType.BeStr
             }
             is List<*> -> {
-                type = BeType.BeList
+                BeType.BeList
             }
             is Map<*, *> -> {
-                type = BeType.BeMap
+                BeType.BeMap
             }
             else -> throw Exception("传入正确的Bencode编码类型")
         }
 
     }
 
-    fun toBenStr(): String {
-        when (obj) {
-            is Number -> {
-                return "i" + obj + "e"
+    fun toBen(): ByteArray {
+        when (type) {
+            BeType.BeInt -> {
+                return ("i" + obj + "e").toByteArray()
             }
-            is String -> {
-                return obj.length.toString() + ":" + obj
+            BeType.BeByte -> {
+                val bytes = obj as ByteArray
+                return (bytes.size.toString() + ":").toByteArray().plus(bytes)
             }
-            is List<*> -> {
-                return obj.joinToString(separator = "", prefix = "l", postfix = "e") { BeObj(it!!).toBenStr() }
+            BeType.BeStr -> {
+                val str = obj as String
+                val bytes = str.toByteArray()
+                return (bytes.size.toString() + ":").toByteArray().plus(bytes)
             }
-            is Map<*, *> -> {
-                return obj.map { BeObj(it.key!!).toBenStr() + BeObj(it.value!!).toBenStr() }
-                    .joinToString(separator = "", prefix = "d", postfix = "e")
+
+            BeType.BeList -> {
+                val list = obj as List<*>
+                return list.map { BeObj(it!!) }.map { it.toBen() }.reduce { acc, bytes -> acc.plus(bytes) }
+            }
+            BeType.BeMap -> {
+                val map = obj as Map<*, *>
+                return map.map { BeObj(it.key!!).toBen().plus(BeObj(it.value!!).toBen()) }
+                    .reduce { acc, bytes -> acc.plus(bytes) }
             }
             else -> throw Exception("传入正确的Bencode编码类型")
         }
@@ -48,8 +60,33 @@ class BeObj(private val obj: Any) {
         return obj
     }
 
+    override fun toString(): String {
+        when (type) {
+            BeType.BeInt -> {
+                return obj.toString()
+            }
+            BeType.BeByte -> {
+                val bytes = obj as ByteArray
+                return String(bytes)
+            }
+            BeType.BeStr -> {
+                return obj as String
+            }
+            BeType.BeList -> {
+                val list = obj as List<*>
+                return list.joinToString(separator = ",", prefix = "[", postfix = "]") { it.toString() }
+            }
+            BeType.BeMap -> {
+                val map = obj as Map<*, *>
+                return map.map { it.key.toString() + ":" + it.value.toString() }
+                    .joinToString(separator = ",", prefix = "{", postfix = "}")
+            }
+            else -> throw Exception("传入正确的Bencode编码类型")
+        }
+    }
+
 }
 
 enum class BeType {
-    BeInt, BeStr, BeList, BeMap
+    BeInt, BeStr, BeList, BeMap, BeByte
 }
