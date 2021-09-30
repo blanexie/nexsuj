@@ -144,7 +144,7 @@ fun Route.auth() {
         if (userTorrentDO == null) {
             userTorrentDO = UserTorrentDO()
             userTorrentDO.infoHash = torrentDO.infoHash
-            userTorrentDO.userId = 2
+            userTorrentDO.userId = user.id
             userTorrentDO.createTime = LocalDateTime.now()
             userTorrentDO.authKey = IdUtil.fastSimpleUUID()
             userTorrentDO.status = 0
@@ -158,16 +158,16 @@ fun Route.auth() {
         torrentDO.announce = "${propsDO.value}?auth_key=${userTorrentDO.authKey}"
 
         val info = database.from(TorrentInfo).select(TorrentInfo.infoHash, TorrentInfo.info)
-            .where { TorrentInfo.infoHash eq torrentDO.infoHash }.limit(1).map { it.getBlob("info") }
-            .last()?.let {
-                it.getBytes(0, it.length().toInt())
-            }
+            .where { TorrentInfo.infoHash eq torrentDO.infoHash }.limit(1)
+            .map { it.getBytes(2) }
+            .last()
+
         val respBencode = toBeMap(torrentDO, info!!)
 
         //返回
         call.respondBytes(
             bytes = respBencode,
-            contentType = ContentType.parse("application/x-bittorrent;charset=utf8")
+            contentType = ContentType.parse("application/x-bittorrent")
         )
     }
 

@@ -23,7 +23,7 @@ data class TrackerReq(val request: ApplicationRequest) {
 
     init {
         infoHash = request.uri.substringAfter("info_hash=").substringBefore("&")
-        authKey = request.queryParameters["authKey"]!!
+        authKey = request.queryParameters["auth_key"]!!
         peerId = request.queryParameters["peer_id"]!!
         port = request.queryParameters["port"]!!.toInt()
         uploaded = request.queryParameters["uploaded"]!!.toLong()
