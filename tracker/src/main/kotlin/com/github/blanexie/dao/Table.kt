@@ -214,7 +214,7 @@ object Torrent : Table<TorrentDO>("torrent") {
 val Database.torrentInfoDO get() = this.sequenceOf(TorrentInfo)
 
 interface TorrentInfoDO : Entity<TorrentInfoDO> {
-    companion object : Entity.Factory<TorrentDO>()
+    companion object : Entity.Factory<TorrentInfoDO>()
 
     //info部分的sha1值. 默认urlencode编码的字符串
     var infoHash: String

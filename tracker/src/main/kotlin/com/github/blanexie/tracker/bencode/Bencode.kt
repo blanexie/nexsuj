@@ -2,10 +2,11 @@ package com.github.blanexie.tracker.bencode
 
 import cn.hutool.crypto.digest.DigestUtil
 import com.github.blanexie.dao.TorrentDO
+import com.github.blanexie.dao.TorrentInfoDO
 import java.nio.ByteBuffer
 
 
-fun toBeMap(torrent: TorrentDO): BeObj {
+fun toBeMap(torrent: TorrentDO, info: ByteArray): ByteArray {
     val beMap = hashMapOf<String, Any?>()
     beMap["announce"] = torrent.announce
 
@@ -21,37 +22,41 @@ fun toBeMap(torrent: TorrentDO): BeObj {
     torrent.encoding?.let {
         beMap["encoding"] = it
     }
-    val infoMap = hashMapOf<String, Any>()
-    infoMap["name"] = torrent.name
-    infoMap["private"] = torrent.private
-    beMap["info"] = infoMap
-    return BeObj(beMap)
+    val beObj = BeObj(beMap)
+    val toBen = beObj.toBen()
+
+    val copyInto = toBen.copyInto(ByteArray(toBen.size + info.size), 0, 0, toBen.size - 1)
+
+    val copyInto1 = info.copyInto(copyInto, toBen.size - 1, 0)
+
+    copyInto1[toBen.size + info.size - 1] = 'e'.code.toByte()
+    return copyInto1
 }
 
 
-fun toTorrent(byteBuffer: ByteBuffer): TorrentDO {
+fun toTorrent(byteBuffer: ByteBuffer): Pair<TorrentDO, ByteArray> {
     val beObj = toBeObj(byteBuffer)
     return toTorrent(beObj)
 }
 
-fun toTorrent(beMap: BeObj): TorrentDO {
+fun toTorrent(beMap: BeObj): Pair<TorrentDO, ByteArray> {
     if (beMap.type != BeType.BeMap) {
         throw Exception("BeMap类型才能生成种子文件")
     }
     val beMapData = beMap.getValue() as Map<String, Any>
     //开始处理文件 外部字段
-    val announce = beMapData["announce"].toString()
-    val comment = beMapData["comment"]?.toString()
+    val announce = (beMapData["announce"] as ByteArray).toStr()
+    val comment = (beMapData["comment"] as ByteArray?)?.toStr()
     val creationDate = beMapData["creation date"] as Long?
-    val createdBy = beMapData["created by"]?.toString()
-    val encoding = beMapData["encoding"]?.toString()
+    val createdBy = (beMapData["created by"] as ByteArray?)?.toStr()
+    val encoding = (beMapData["encoding"] as ByteArray?)?.toStr()
 
     //开始处理Info中字段
     val infoMap = beMapData["info"] as Map<String, Any>
     //计算infohash值
     val toBen = BeObj(infoMap).toBen()
     val infoHash = urlEncode(DigestUtil.sha1(toBen))
-    val name = infoMap["name"]!!.toString()
+    val name = (infoMap["name"] as ByteArray).toStr()
 
     val private = infoMap["private"] as Long
     //开始处理单文件和多文件
@@ -64,10 +69,11 @@ fun toTorrent(beMap: BeObj): TorrentDO {
     } else {
         length
     }
-    return buildTorrent(
+    val buildTorrent = buildTorrent(
         announce, createdBy, comment, creationDate, encoding, infoHash, size,
         name, private.toInt(), files
     )
+    return buildTorrent to toBen
 }
 
 
@@ -205,4 +211,9 @@ fun urlEncode(bytes: ByteArray): String {
         }
     }
     return buf.toString()
+}
+
+
+fun ByteArray.toStr(): String {
+    return String(this)
 }
