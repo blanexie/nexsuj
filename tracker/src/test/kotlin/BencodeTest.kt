@@ -21,8 +21,8 @@ class BencodeTest {
         val value = "10:i19safag8e"
         val wrap = ByteBuffer.wrap(value.toByteArray())
         val beObj = toBeObj(wrap)
-        assert(beObj.type == BeType.BeStr)
-        assert(beObj.getValue() == value.substring(3, value.length))
+        assert(beObj.type == BeType.BeByte)
+        assert(beObj.toString() == value.substring(3, value.length))
     }
 
 
@@ -30,11 +30,11 @@ class BencodeTest {
     fun beList() {
         val value = "l10:i19safag8ei13ee"
         val wrap = ByteBuffer.wrap(value.toByteArray())
-        val pair = toBeObj(wrap)
-        assert(pair.type == BeType.BeList)
+        val beObj = toBeObj(wrap)
+        assert(beObj.type == BeType.BeList)
 
-        val list = pair.getValue() as List<*>
-        val toStr = pair.toBen()
+        val list = beObj.getValue() as List<*>
+        val toStr = beObj.toBen()
 
         assert(wrap.position() == 19)
 

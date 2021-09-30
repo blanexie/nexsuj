@@ -4,6 +4,7 @@ import com.github.blanexie.dao.*
 import com.github.blanexie.tracker.bencode.BeObj
 import io.ktor.application.*
 import io.ktor.features.*
+import io.ktor.http.*
 import io.ktor.request.*
 import io.ktor.response.*
 import io.ktor.routing.*
@@ -22,9 +23,7 @@ val log = LoggerFactory.getLogger("announce")!!
 fun Route.tracker() {
 
     get("/announce") {
-
         val trackerReq = TrackerReq(call.request)
-
         // 0. 检查访问的客户端是否符合要求
         val errorMsg = blockBrowser(call.request)
         if (errorMsg != null) {
@@ -77,7 +76,7 @@ fun Route.tracker() {
         resp["incomplete"] = 0
         resp["complete"] = 1
         resp["peers"] = peersStr
-        call.respond(BeObj(resp).toBen())
+        call.respondBytes(BeObj(resp).toBen(), contentType = ContentType.parse("text/plain"))
     }
 
 }

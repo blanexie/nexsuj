@@ -6,6 +6,8 @@ import com.github.blanexie.nexusj.controller.param.Result
 import com.github.blanexie.nexusj.controller.param.UserQuery
 import com.github.blanexie.nexusj.support.UserPrincipal
 import com.github.blanexie.nexusj.support.jwtSign
+import com.github.blanexie.tracker.bencode.BeObj
+import com.github.blanexie.tracker.bencode.BeType
 import com.github.blanexie.tracker.bencode.toBeMap
 import com.github.blanexie.tracker.bencode.toTorrent
 import io.ktor.application.*
@@ -17,8 +19,7 @@ import io.ktor.response.*
 import io.ktor.routing.*
 import io.ktor.sessions.*
 import io.ktor.utils.io.core.*
-import org.ktorm.dsl.and
-import org.ktorm.dsl.eq
+import org.ktorm.dsl.*
 import org.ktorm.entity.add
 import org.ktorm.entity.first
 import org.ktorm.entity.firstOrNull
@@ -31,8 +32,8 @@ fun Route.notAuth() {
      * 下载种子文件
      */
     get("/download/torrent") {
-        //val principal = call.authentication.principal<UserPrincipal>()!!
-        // val user = principal.user!!
+        val principal = call.authentication.principal<UserPrincipal>()!!
+        val user = principal.user!!
 
         val id = call.request.queryParameters["id"]!!.toInt()
         val torrentDO = database.torrentDO.first { it.id eq id }
@@ -43,10 +44,10 @@ fun Route.notAuth() {
         }
         //增加一条userTorrent记录
         var userTorrentDO =
-            database.userTorrentDO.firstOrNull { (it.infoHash eq torrentDO.pieces) and (it.userId eq 2) }
+            database.userTorrentDO.firstOrNull { (it.infoHash eq torrentDO.infoHash) and (it.userId eq user.id) }
         if (userTorrentDO == null) {
             userTorrentDO = UserTorrentDO()
-            userTorrentDO.infoHash = torrentDO.pieces
+            userTorrentDO.infoHash = torrentDO.infoHash
             userTorrentDO.userId = 2
             userTorrentDO.createTime = LocalDateTime.now()
             userTorrentDO.authKey = IdUtil.fastSimpleUUID()
@@ -59,12 +60,26 @@ fun Route.notAuth() {
             (it.type eq "properties") and (it.code eq "announce")
         }
         torrentDO.announce = "${propsDO.value}?auth_key=${userTorrentDO.authKey}"
-        torrentDO.announceList = null
+
         val toBeMap = toBeMap(torrentDO)
+
+        val info = database.from(TorrentInfo).select(TorrentInfo.infoHash, TorrentInfo.info)
+            .where { TorrentInfo.infoHash eq torrentDO.infoHash }.limit(1).map { it.getBlob("info") }
+            .last()?.let {
+                it.getBytes(0, it.length().toInt())
+            }
+
+        val value = toBeMap.getValue() as Map<String, Any>
+        val s = mutableMapOf<String, Any>()
+        s.putAll(value)
+        s.put("info", BeObj(info as Any, BeType.Bencode))
+
+
         val toBenStr = toBeMap.toBen()
+
         //返回
         call.respondBytes(
-            bytes = toBenStr.toByteArray(),
+            bytes = toBenStr,
             contentType = ContentType.parse("application/x-bittorrent;charset=utf8")
         )
     }

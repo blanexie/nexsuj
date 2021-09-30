@@ -1,7 +1,6 @@
 package com.github.blanexie.dao
 
-import com.github.blanexie.dao.Props.bindTo
-import com.github.blanexie.dao.Props.primaryKey
+
 import com.github.blanexie.tracker.server.TrackerReq
 import org.ktorm.database.Database
 import org.ktorm.entity.Entity
@@ -161,27 +160,27 @@ interface TorrentDO : Entity<TorrentDO> {
     var id: Int
 
     var announce: String
-    var announceList: List<String>?
     var creationDate: Long?
     var createdBy: String?
     var comment: String?
     var encoding: String?
 
+    //info部分的sha1值. 默认urlencode编码的字符串
+    var infoHash: String
+
     //info的信息
     var name: String
-    var pieces: String     //所有文件的hash值
-    var pieceLength: Long
-    var length: Long?
-    var private: Int
     var files: List<Map<String, Any>>?
+    var private: Int
 
+    var size: Long  //文件总大小
     var status: Int
     var userId: Int
     var uploadTime: LocalDateTime
     var type: String
     var labels: List<String>
     var title: String
-    var description: String
+
 }
 
 
@@ -189,26 +188,46 @@ object Torrent : Table<TorrentDO>("torrent") {
     var id = int("id").primaryKey().bindTo { it.id }
 
     var announce = varchar("announce").bindTo { it.announce }
-    var announceList = json<List<String>>("announce_list").bindTo { it.announceList }
     var createdBy = varchar("created_by").bindTo { it.createdBy }
     var comment = varchar("comment").bindTo { it.comment }
     var creationDate = long("creation_date").bindTo { it.creationDate }
     var encoding = varchar("encoding").bindTo { it.encoding }
 
+    var infoHash = varchar("info_hash").bindTo { it.infoHash }
+
     var name = varchar("name").bindTo { it.name }
-    var pieces = varchar("pieces").bindTo { it.pieces }
-    var pieceLength = long("piece_length").bindTo { it.pieceLength }
-    var length = long("length").bindTo { it.length }
     var private = int("private").bindTo { it.private }
     var files = json<List<Map<String, Any>>>("files").bindTo { it.files }
 
+
+    var size = long("size").bindTo { it.size }
     var userId = int("user_id").bindTo { it.userId }
     var status = int("status").bindTo { it.status }
     var uploadTime = datetime("upload_time").bindTo { it.uploadTime }
-
     var type = varchar("type").bindTo { it.type }
     var labels = json<List<String>>("labels").bindTo { it.labels }
     var title = varchar("title").bindTo { it.title }
+
+}
+
+/*********************************/
+val Database.torrentInfoDO get() = this.sequenceOf(TorrentInfo)
+
+interface TorrentInfoDO : Entity<TorrentInfoDO> {
+    companion object : Entity.Factory<TorrentDO>()
+
+    //info部分的sha1值. 默认urlencode编码的字符串
+    var infoHash: String
+
+    //十分重要的info信息, 文件的唯一标识
+    var info: ByteArray
+    var description: String
+
+}
+
+object TorrentInfo : Table<TorrentInfoDO>("torrent_info") {
+    var infoHash = varchar("info_hash").bindTo { it.infoHash }
+    var info = blob("info").bindTo { it.info }
     var description = varchar("description").bindTo { it.description }
 
 }
