@@ -7,11 +7,13 @@ import com.auth0.jwt.JWTVerifier
 import com.auth0.jwt.algorithms.Algorithm
 import com.github.blanexie.dao.UserDO
 import com.github.blanexie.dao.database
+import com.github.blanexie.dao.gson
 import com.github.blanexie.dao.userDO
 import com.github.blanexie.nexusj.controller.auth
 import com.github.blanexie.nexusj.controller.notAuth
 import com.github.blanexie.nexusj.support.SimpleJWT
 import com.github.blanexie.nexusj.support.UserPrincipal
+import com.github.blanexie.nexusj.support.jwtDecode
 import io.ktor.application.*
 import io.ktor.auth.*
 import io.ktor.auth.jwt.*
@@ -49,7 +51,8 @@ fun Application.nexus(testing: Boolean = true) {
             this.realm = realm
             validate { credential ->
                 if (credential.payload.audience.contains(audience)) {
-                    val userDO = database.userDO.first { it.id eq credential.payload.subject.toInt() }
+                    val subject = credential.payload.subject
+                    val userDO = gson.fromJson(jwtDecode(subject), UserDO::class.java)
                     UserPrincipal(userDO)
                 } else {
                     null

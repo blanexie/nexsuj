@@ -6,8 +6,6 @@ import com.github.blanexie.nexusj.controller.param.Result
 import com.github.blanexie.nexusj.controller.param.UserQuery
 import com.github.blanexie.nexusj.support.UserPrincipal
 import com.github.blanexie.nexusj.support.jwtSign
-import com.github.blanexie.tracker.bencode.BeObj
-import com.github.blanexie.tracker.bencode.BeType
 import com.github.blanexie.tracker.bencode.toBeMap
 import com.github.blanexie.tracker.bencode.toTorrent
 import io.ktor.application.*
@@ -17,8 +15,6 @@ import io.ktor.http.content.*
 import io.ktor.request.*
 import io.ktor.response.*
 import io.ktor.routing.*
-import io.ktor.sessions.*
-import io.ktor.utils.io.core.*
 import org.ktorm.dsl.*
 import org.ktorm.entity.add
 import org.ktorm.entity.first
@@ -27,6 +23,11 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.nio.ByteBuffer
 import java.time.LocalDateTime
+import kotlin.collections.List
+import kotlin.collections.hashMapOf
+import kotlin.collections.last
+import kotlin.collections.mapOf
+import kotlin.collections.set
 
 val logger: Logger = LoggerFactory.getLogger("NexusController")!!
 
@@ -63,7 +64,8 @@ fun Route.notAuth() {
             call.respond(Result(403, "登录失败"))
             return@post
         }
-        val token = call.application.jwtSign(userDO.id)
+        val toJson = gson.toJson(userDO)
+        val token = call.application.jwtSign(toJson)
         call.respond(Result(body = mapOf("token" to token)))
         return@post
     }
@@ -120,7 +122,6 @@ fun Route.auth() {
                 logger.error("", e)
             }
         }
-
         call.respond(Result())
     }
 
