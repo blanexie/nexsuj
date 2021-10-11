@@ -1,6 +1,8 @@
 package com.github.blanexie.tracker.server
 
 import com.github.blanexie.dao.*
+import com.github.blanexie.event.eventBus
+import com.github.blanexie.event.uploadBytes
 import com.github.blanexie.tracker.bencode.BeObj
 import io.ktor.application.*
 import io.ktor.features.*
@@ -67,15 +69,21 @@ fun Route.tracker() {
                 database.peerDO.update(peer)
             }
         }
+
         //2.2 返回数据
         val peersStr = peers.filter { it.peerId != peer.peerId }.map { getCompactPeer(it.ip, it.port) }
             .joinToString(separator = "")
+        val count = peers.filter { it.event == "completed" }.count()
         val resp = hashMapOf<String, Any>()
         resp["interval"] = 3600
         resp["min interval"] = 30
-        resp["incomplete"] = 0
-        resp["complete"] = 1
+        resp["incomplete"] = peers.size - count
+        resp["complete"] = count
         resp["peers"] = peersStr
+
+        //3. 上报用户下载和上传的数据
+        eventBus.publish(uploadBytes, trackerReq)
+
         call.respondBytes(BeObj(resp).toBen(), contentType = ContentType.parse("text/plain"))
     }
 

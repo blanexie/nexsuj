@@ -2,7 +2,8 @@ package com.github.blanexie.event
 
 interface Listener {
 
-    fun id():String
+    fun topic(): String
 
-    suspend fun process(event: Any)
+    suspend fun process(event: Event<*>)
+
 }
