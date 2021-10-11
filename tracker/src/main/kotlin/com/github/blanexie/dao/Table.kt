@@ -8,26 +8,6 @@ import org.ktorm.entity.sequenceOf
 import org.ktorm.schema.*
 import java.time.LocalDateTime
 
-
-/*****************************************************/
-val Database.propsDO get() = this.sequenceOf(Props)
-
-interface PropsDO : Entity<PropsDO> {
-    companion object : Entity.Factory<UserDO>()
-
-    var id: Int
-    var type: String
-    var code: String
-    var value: String
-}
-
-object Props : Table<PropsDO>("props") {
-    var id = int("id").primaryKey().bindTo { it.id }
-    var type = varchar("type").bindTo { it.type }
-    var code = varchar("code").bindTo { it.code }
-    var value = varchar("value").bindTo { it.value }
-}
-
 /*****************************************************/
 val Database.userDO get() = this.sequenceOf(User)
 

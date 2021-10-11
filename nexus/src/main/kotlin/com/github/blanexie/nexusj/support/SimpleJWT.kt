@@ -6,38 +6,47 @@ import cn.hutool.crypto.symmetric.AES
 import com.auth0.jwt.JWT
 import com.auth0.jwt.JWTVerifier
 import com.auth0.jwt.algorithms.Algorithm
+import com.github.blanexie.nexusj.setting
 import io.ktor.application.*
 import java.util.*
 
 
-var algorithm: Algorithm? = null
 
-const val jwtAesKey = "XxIkq9eUmfAsQAFqwOsjEE5gtvfYKJkErjZRBMtV2ipkKGZ0LGy4vymMMp9nSi3K"
+
+val jwtAesKey = setting.get("jwt.aesKey")!!
+val issuer = setting.get("jwt.domain")!!
+val audience = setting.get("jwt.audience")!!
+val realm = setting.get("jwt.realm")!!
+val secret = setting.get("jwt.secret")!!
+
+var algorithm: Algorithm =  Algorithm.HMAC256(secret)
+
 val aes: AES = SecureUtil.aes(jwtAesKey.toByteArray())
 
-
-open class SimpleJWT(secret: String, issuer: String, audience: String) {
-    init {
-        if (algorithm == null) {
-            algorithm = Algorithm.HMAC256(secret)
-        }
-    }
+open class SimpleJWT {
 
     val verifier: JWTVerifier = JWT.require(algorithm)
         .withAudience(audience)
         .withIssuer(issuer)
         .build()
+
+    fun issuer():String{
+        return  issuer
+    }
+    fun realm():String{
+        return  realm
+    }
+    fun audience():String{
+        return  audience
+    }
+    fun secret():String{
+        return  secret
+    }
+
 }
 
 
 fun Application.jwtSign(subject: String): String {
-    if (algorithm == null) {
-        val secret = environment.config.property("jwt.secret").getString()
-        algorithm = Algorithm.HMAC256(secret)
-    }
-    val issuer = environment.config.property("jwt.domain").getString()
-    val audience = environment.config.property("jwt.audience").getString()
-
     val expiredDate = DateUtil.offsetDay(Date(), 7)
     return JWT.create()
         .withSubject(jwtEncode(subject))

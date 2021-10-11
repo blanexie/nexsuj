@@ -4,6 +4,7 @@ import cn.hutool.core.util.IdUtil
 import com.github.blanexie.dao.*
 import com.github.blanexie.nexusj.controller.param.Result
 import com.github.blanexie.nexusj.controller.param.UserQuery
+import com.github.blanexie.nexusj.setting
 import com.github.blanexie.nexusj.support.UserPrincipal
 import com.github.blanexie.nexusj.support.jwtSign
 import com.github.blanexie.tracker.bencode.toBeMap
@@ -153,21 +154,17 @@ fun Route.auth() {
         }
 
         //构建下载者的announce
-        val propsDO = database.propsDO.first {
-            (it.type eq "properties") and (it.code eq "announce")
-        }
-        torrentDO.announce = "${propsDO.value}?auth_key=${userTorrentDO.authKey}"
+        val announceUrl = setting["pt.announce.url"]
+        torrentDO.announce = "${announceUrl}?auth_key=${userTorrentDO.authKey}"
 
         val info = database.from(TorrentInfo).select(TorrentInfo.infoHash, TorrentInfo.info)
             .where { TorrentInfo.infoHash eq torrentDO.infoHash }.limit(1)
             .map { it.getBytes(2) }
             .last()
 
-        val respBencode = toBeMap(torrentDO, info!!)
-
         //返回
         call.respondBytes(
-            bytes = respBencode,
+            bytes = toBeMap(torrentDO, info!!),
             contentType = ContentType.parse("application/x-bittorrent")
         )
     }
