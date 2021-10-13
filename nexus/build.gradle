@@ -12,8 +12,6 @@ application {
 
 dependencies {
 
-    implementation project(":tracker")
-
     implementation "io.ktor:ktor-server-sessions:$ktor_version"
     compile "io.ktor:ktor-auth:$ktor_version"
     compile "io.ktor:ktor-auth-jwt:$ktor_version"
