@@ -1,5 +1,6 @@
 package com.github.blanexie.dao
 
+import com.github.blanexie.nexusj.setting
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import io.ktor.application.*
@@ -11,11 +12,10 @@ val database = Database.connect(HikariDataSource(hikariConfig()), dialect = MySq
 
 fun hikariConfig(): HikariConfig {
     val hikariConfig = HikariConfig()
-    hikariConfig.jdbcUrl =
-        "jdbc:mysql://192.168.0.106:8306/nexusj?allowPublicKeyRetrieval=true&serverTimezone=Asia/Shanghai"
-    hikariConfig.username = "xiezc"
-    hikariConfig.password = "M93jj6fuSAd2"
-    hikariConfig.driverClassName = "com.mysql.cj.jdbc.Driver"
-    hikariConfig.minimumIdle = 3
+    hikariConfig.jdbcUrl = setting.getStr("jdbcUrl")
+    hikariConfig.username = setting.getStr("username")
+    hikariConfig.password = setting.getStr("password")
+    hikariConfig.driverClassName = setting.getStr("driverClassName")
+    hikariConfig.minimumIdle = setting.getInt("minimumIdle")
     return hikariConfig
 }

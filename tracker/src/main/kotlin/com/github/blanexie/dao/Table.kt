@@ -8,6 +8,72 @@ import org.ktorm.entity.sequenceOf
 import org.ktorm.schema.*
 import java.time.LocalDateTime
 
+
+/*********************** 上报流量流水表, 根据这个流水确定用户的总上传 下载 和积分 , 这个表需要定期清理,  ******************************/
+val Database.udBytesDO get() = this.sequenceOf(UdBytes)
+
+interface UdBytesDO : Entity<UdBytesDO> {
+    companion object : Entity.Factory<UdBytesDO>()
+
+    var id: Int
+
+    var userId: Int
+
+    //urlEncode编码的种子文件
+    var infoHash: String
+
+    //上报的时间
+    var uploadTime: LocalDateTime
+
+    var upload: Long
+    var download: Long
+    var left: Long
+
+    //1: 该条记录已经经过认证无误, 并且已经落库用户表中
+    //0: 该条记录还未认证
+    //-1: 这条上报记录作废
+    var status: Int
+
+    /**
+     * 本条记录,  有效的计算的上传量
+     * 正数加, 负数减
+     */
+    var changeUpload: Long
+
+    /**
+     * 本条记录,  有效的计算的下载量
+     *   正数加, 负数减
+     */
+    var changeDownload: Long
+
+    /**
+     * 本条记录,  有效的计算的积分修改量
+     *   正数加, 负数减
+     */
+    var changeIntegral: Long
+
+}
+
+object UdBytes : Table<UdBytesDO>("upbytes") {
+    var id = int("id").primaryKey().bindTo { it.id }
+    var userId = int("user_id").bindTo { it.userId }
+    var infoHash = varchar("info_hash").bindTo { it.infoHash }
+    var uploadTime = datetime("upload_time").bindTo { it.uploadTime }
+    var upload = long("upload").bindTo { it.upload }
+
+    //下载量
+    var download = long("download").bindTo { it.download }
+
+    //剩余量
+    var left = long("left").bindTo { it.left }
+
+    var changeUpload = long("change_upload").bindTo { it.changeUpload }
+    var changeDownload = long("change_download").bindTo { it.changeDownload }
+    var changeIntegral = long("change_integral").bindTo { it.changeIntegral }
+
+    var status = int("status").bindTo { it.status }
+}
+
 /*****************************************************/
 val Database.userDO get() = this.sequenceOf(User)
 
@@ -19,10 +85,30 @@ interface UserDO : Entity<UserDO> {
     var pwd: String
     var nick: String
     var sex: Int
+
+    //上传量, 汇总的上传量
+    var upload: Long
+
+    //下载量,  汇总的下载量
+    var download: Long
+
+    // 积分的大小,  总积分
+    var integral: Long
+
     var createTime: LocalDateTime
     var updateTime: LocalDateTime
     var authKey: String
+
+    /**
+     * 0: 正常用户
+     * -1: 封禁用户
+     */
     var status: Int
+
+    /**
+     * 解封时间, 只有封禁的状态这个字段才有意义
+     */
+    var unlockTime: LocalDateTime
 }
 
 object User : Table<UserDO>("user") {
@@ -31,10 +117,22 @@ object User : Table<UserDO>("user") {
     var pwd = varchar("pwd").bindTo { it.pwd }
     var sex = int("sex").bindTo { it.sex }
     var nick = varchar("nick").bindTo { it.nick }
+
+    //上传量
+    var upload = long("upload").bindTo { it.upload }
+
+    //下载量
+    var download = long("download").bindTo { it.download }
+
+    // 积分的大小
+    var integral = long("integral").bindTo { it.integral }
+
     var createTime = datetime("create_time").bindTo { it.createTime }
     var updateTime = datetime("update_time").bindTo { it.updateTime }
     var auth_key = varchar("auth_key").bindTo { it.authKey }
     var status = int("status").bindTo { it.status }
+    var unlockTime = datetime("unlock_time").bindTo { it.unlockTime }
+
 }
 
 /*****************************************************/
@@ -107,6 +205,8 @@ interface PeerDO : Entity<PeerDO> {
     var userId: Int
     var createTime: LocalDateTime
     var lastReportTime: LocalDateTime
+    //默认0 , 如果-1 就是表示这个peerId被禁用了
+    var status:Int
 
 }
 
@@ -129,6 +229,7 @@ object Peer : Table<PeerDO>("peer") {
     var userId = int("user_id").bindTo { it.userId }
     var lastReportTime = datetime("last_report_time").bindTo { it.lastReportTime }
     var authKey = varchar("auth_key").bindTo { it.authKey }
+    var status = int("status").bindTo { it.status }
 }
 
 /***************************************************************/
