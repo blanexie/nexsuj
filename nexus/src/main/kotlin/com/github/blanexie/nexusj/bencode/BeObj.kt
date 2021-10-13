@@ -1,4 +1,4 @@
-package com.github.blanexie.tracker.bencode
+package com.github.blanexie.nexusj.bencode
 
 import java.lang.Exception
 

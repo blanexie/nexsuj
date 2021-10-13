@@ -1,7 +1,8 @@
 package com.github.blanexie.dao
 
 
-import com.github.blanexie.tracker.server.TrackerReq
+import com.github.blanexie.nexusj.controller.param.TrackerReq
+import com.github.blanexie.nexusj.support.json
 import org.ktorm.database.Database
 import org.ktorm.entity.Entity
 import org.ktorm.entity.sequenceOf

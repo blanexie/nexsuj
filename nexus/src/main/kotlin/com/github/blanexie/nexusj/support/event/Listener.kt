@@ -1,4 +1,4 @@
-package com.github.blanexie.event
+package com.github.blanexie.nexusj.support.event
 
 interface Listener {
 

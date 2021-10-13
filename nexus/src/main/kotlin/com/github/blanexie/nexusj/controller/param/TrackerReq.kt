@@ -1,5 +1,6 @@
-package com.github.blanexie.tracker.server
+package com.github.blanexie.nexusj.controller.param
 
+import com.github.blanexie.tracker.server.getIpAddress
 import io.ktor.application.*
 import io.ktor.request.*
 

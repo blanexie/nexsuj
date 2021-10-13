@@ -1,6 +1,6 @@
 import cn.hutool.core.io.resource.ClassPathResource
 import cn.hutool.json.JSONUtil
-import com.github.blanexie.tracker.bencode.*
+import com.github.blanexie.nexusj.bencode.*
 import org.junit.jupiter.api.Test
 import java.nio.ByteBuffer
 
@@ -91,7 +91,7 @@ class BencodeTest {
         val torrent = toTorrent(benDecode)
         println(JSONUtil.toJsonStr(torrent))
 
-        val toBeMap = toBeMap(torrent)
+        val toBeMap = toBeMap(torrent.first,torrent.second)
 
         println(JSONUtil.toJsonStr(toBeMap))
 

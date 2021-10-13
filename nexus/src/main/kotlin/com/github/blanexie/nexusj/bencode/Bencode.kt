@@ -1,8 +1,7 @@
-package com.github.blanexie.tracker.bencode
+package com.github.blanexie.nexusj.bencode
 
 import cn.hutool.crypto.digest.DigestUtil
 import com.github.blanexie.dao.TorrentDO
-import com.github.blanexie.dao.TorrentInfoDO
 import java.nio.ByteBuffer
 
 

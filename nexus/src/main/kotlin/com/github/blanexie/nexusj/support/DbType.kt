@@ -1,21 +1,17 @@
-package com.github.blanexie.dao
+package com.github.blanexie.nexusj.support
 
-import com.google.gson.Gson
-import com.google.gson.GsonBuilder
+import com.github.blanexie.nexusj.gson
 import org.ktorm.schema.BaseTable
 import org.ktorm.schema.Column
 import org.ktorm.schema.SqlType
 import java.sql.PreparedStatement
 import java.sql.ResultSet
 import java.sql.Types
-import java.text.DateFormat
 import kotlin.reflect.KClass
 
 inline fun <reified C : Any> BaseTable<*>.json(name: String): Column<C> {
     return registerColumn(name, JsonSqlType(C::class))
 }
-
-val gson: Gson = GsonBuilder().setDateFormat(DateFormat.LONG).create()!!
 
 class JsonSqlType<T : Any>(
     private val kClass: KClass<T>

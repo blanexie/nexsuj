@@ -7,8 +7,9 @@ import com.github.blanexie.nexusj.controller.param.UserQuery
 import com.github.blanexie.nexusj.setting
 import com.github.blanexie.nexusj.support.UserPrincipal
 import com.github.blanexie.nexusj.support.jwtSign
-import com.github.blanexie.tracker.bencode.toBeMap
-import com.github.blanexie.tracker.bencode.toTorrent
+import com.github.blanexie.nexusj.bencode.toBeMap
+import com.github.blanexie.nexusj.bencode.toTorrent
+import com.github.blanexie.nexusj.gson
 import io.ktor.application.*
 import io.ktor.auth.*
 import io.ktor.http.*

@@ -3,12 +3,14 @@ package com.github.blanexie.nexusj
 import cn.hutool.core.io.resource.ClassPathResource
 import cn.hutool.setting.Setting
 import com.github.blanexie.dao.UserDO
-import com.github.blanexie.dao.gson
 import com.github.blanexie.nexusj.controller.auth
 import com.github.blanexie.nexusj.controller.notAuth
 import com.github.blanexie.nexusj.support.SimpleJWT
 import com.github.blanexie.nexusj.support.UserPrincipal
 import com.github.blanexie.nexusj.support.jwtDecode
+import com.github.blanexie.tracker.server.tracker
+import com.google.gson.Gson
+import com.google.gson.GsonBuilder
 import io.ktor.application.*
 import io.ktor.auth.*
 import io.ktor.auth.jwt.*
@@ -18,6 +20,7 @@ import io.ktor.routing.*
 import java.text.DateFormat
 
 
+val gson: Gson = GsonBuilder().setDateFormat(DateFormat.LONG).create()!!
 val setting = Setting(ClassPathResource(System.getProperty("properties.path") ?: "app.properties").path)
 
 fun main(args: Array<String>): Unit {
@@ -53,6 +56,9 @@ fun Application.nexus(testing: Boolean = true) {
     }
 
     routing {
+        route(("/")) {
+            tracker()
+        }
         route(("/api/nexus")) {
             authenticate {
                 auth()
