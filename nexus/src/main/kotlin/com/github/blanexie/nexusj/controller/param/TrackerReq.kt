@@ -3,6 +3,7 @@ package com.github.blanexie.nexusj.controller.param
 import com.github.blanexie.tracker.server.getIpAddress
 import io.ktor.application.*
 import io.ktor.request.*
+import java.time.LocalDateTime
 
 data class TrackerReq(val request: ApplicationRequest) {
     val infoHash: String
@@ -21,6 +22,7 @@ data class TrackerReq(val request: ApplicationRequest) {
     val trackerId: String?    // 可选. 如果上次发布含有trackerid,这次就要重新送还.
     val numwant: Int  //: 可选的期望Tracker最大返回数.缺省为50个.
     val authKey: String
+    var uploadTime: LocalDateTime
 
     init {
         infoHash = request.uri.substringAfter("info_hash=").substringBefore("&")
@@ -58,7 +60,7 @@ data class TrackerReq(val request: ApplicationRequest) {
         } else {
             this.compact = 1
         }
-
+        this.uploadTime = LocalDateTime.now()
     }
 
 

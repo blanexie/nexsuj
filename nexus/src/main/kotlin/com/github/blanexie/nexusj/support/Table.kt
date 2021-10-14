@@ -18,7 +18,7 @@ interface UdBytesDO : Entity<UdBytesDO> {
 
     var id: Int
 
-    var userId: Int
+    var authKey: String
 
     //urlEncode编码的种子文件
     var infoHash: String
@@ -57,7 +57,7 @@ interface UdBytesDO : Entity<UdBytesDO> {
 
 object UdBytes : Table<UdBytesDO>("upbytes") {
     var id = int("id").primaryKey().bindTo { it.id }
-    var userId = int("user_id").bindTo { it.userId }
+    var authKey = varchar("auth_key").bindTo { it.authKey }
     var infoHash = varchar("info_hash").bindTo { it.infoHash }
     var uploadTime = datetime("upload_time").bindTo { it.uploadTime }
     var upload = long("upload").bindTo { it.upload }

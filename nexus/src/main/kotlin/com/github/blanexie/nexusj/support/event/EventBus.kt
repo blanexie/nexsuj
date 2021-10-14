@@ -55,7 +55,6 @@ class EventBusImpl : EventBus {
         listeners.remove(listener.topic())
     }
 
-
     override fun publish(event: Event<*>) {
         if (!channel.isClosedForSend) {
             coroutineScope.launch {
