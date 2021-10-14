@@ -255,13 +255,29 @@ interface TorrentDO : Entity<TorrentDO> {
     var files: List<Map<String, Any>>?
     var private: Int
 
-    var size: Long  //文件总大小
+    //文件总大小
+    var size: Long
+
+    //0: 初始化状态 1: 正常可以使用的状态 -1： 非法的种子
     var status: Int
+    //种子的上传这id
     var userId: Int
+    //上传时间
     var uploadTime: LocalDateTime
+
+    // 种子的类型， 9kg , 电影， 连续剧等
     var type: String
+    //种子的标签
     var labels: List<String>
+    //标题
     var title: String
+
+    //上传比率， 默认1
+    var ratioUp:Float
+    //下载比率， 默认1
+    var ratioDown:Float
+    //上传下载 回复正常的时间点
+    var rationTime:LocalDateTime
 
 }
 
@@ -289,6 +305,11 @@ object Torrent : Table<TorrentDO>("torrent") {
     var type = varchar("type").bindTo { it.type }
     var labels = json<List<String>>("labels").bindTo { it.labels }
     var title = varchar("title").bindTo { it.title }
+
+
+    var ratioUp = float("ratio_up").bindTo { it.ratioUp }
+    var ratioDown =  float("ratio_down").bindTo { it.ratioDown }
+    var rationTime = datetime("ration_time").bindTo { it.rationTime }
 
 }
 
