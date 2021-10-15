@@ -1,7 +1,12 @@
 package com.github.blanexie.nexusj.support
 
+import cn.hutool.core.codec.Base64
 import cn.hutool.core.date.DateUtil
+import cn.hutool.core.util.HexUtil
+import cn.hutool.core.util.ZipUtil
 import cn.hutool.crypto.SecureUtil
+import cn.hutool.crypto.digest.DigestAlgorithm
+import cn.hutool.crypto.digest.Digester
 import cn.hutool.crypto.symmetric.AES
 import com.auth0.jwt.JWT
 import com.auth0.jwt.JWTVerifier
@@ -11,17 +16,16 @@ import io.ktor.application.*
 import java.util.*
 
 
-
-
 val jwtAesKey = setting.get("jwt.aesKey")!!
 val issuer = setting.get("jwt.domain")!!
 val audience = setting.get("jwt.audience")!!
 val realm = setting.get("jwt.realm")!!
 val secret = setting.get("jwt.secret")!!
 
-var algorithm: Algorithm =  Algorithm.HMAC256(secret)
+var algorithm: Algorithm = Algorithm.HMAC256(secret)
 
-val aes: AES = SecureUtil.aes(jwtAesKey.toByteArray())
+
+val aes: AES = AES(Digester(DigestAlgorithm.SHA256).digest(jwtAesKey))
 
 open class SimpleJWT {
 
@@ -30,17 +34,20 @@ open class SimpleJWT {
         .withIssuer(issuer)
         .build()
 
-    fun issuer():String{
-        return  issuer
+    fun issuer(): String {
+        return issuer
     }
-    fun realm():String{
-        return  realm
+
+    fun realm(): String {
+        return realm
     }
-    fun audience():String{
-        return  audience
+
+    fun audience(): String {
+        return audience
     }
-    fun secret():String{
-        return  secret
+
+    fun secret(): String {
+        return secret
     }
 
 }
@@ -57,9 +64,12 @@ fun Application.jwtSign(subject: String): String {
 }
 
 fun Application.jwtDecode(subject: String): String {
-    return aes.decryptStr(subject)
+    val encrypt = aes.decrypt(subject)
+    val unGzip = ZipUtil.unGzip(encrypt)
+    return String(unGzip)
 }
 
 fun Application.jwtEncode(subject: String): String {
-    return aes.encryptHex(subject)
+    val gzip = ZipUtil.gzip(subject.toByteArray())
+    return  aes.encryptBase64(gzip)
 }

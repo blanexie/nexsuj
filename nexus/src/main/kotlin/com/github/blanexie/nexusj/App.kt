@@ -1,6 +1,8 @@
 package com.github.blanexie.nexusj
 
+import cn.hutool.core.bean.BeanUtil
 import cn.hutool.core.io.resource.ClassPathResource
+import cn.hutool.json.JSONUtil
 import cn.hutool.setting.Setting
 import com.github.blanexie.dao.UserDO
 import com.github.blanexie.nexusj.controller.auth
@@ -46,7 +48,13 @@ fun Application.nexus(testing: Boolean = true) {
             validate { credential ->
                 if (credential.payload.audience.contains(simpleJWT.audience())) {
                     val subject = credential.payload.subject
-                    val userDO = gson.fromJson(jwtDecode(subject), UserDO::class.java)
+                    val jwtDecode = jwtDecode(subject)
+                    val userDO = UserDO()
+
+                    val parseObj = JSONUtil.parseObj(jwtDecode)
+                    BeanUtil.fillBeanWithMap(parseObj, userDO, true)
+
+                    // val userDO = gson.fromJson(, UserDO::class.java)
                     UserPrincipal(userDO)
                 } else {
                     null

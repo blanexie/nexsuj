@@ -7,7 +7,8 @@ import com.github.blanexie.nexusj.controller.param.TrackerReq
 import com.github.blanexie.nexusj.support.event.Event
 import com.github.blanexie.nexusj.support.event.Listener
 import com.github.blanexie.nexusj.support.event.uploadBytes
-import org.ktorm.entity.add
+import org.ktorm.dsl.eq
+import org.ktorm.entity.*
 import kotlin.reflect.cast
 
 
@@ -17,7 +18,7 @@ import kotlin.reflect.cast
 class UdBytesListener : Listener {
 
     override fun topic(): String {
-        return  uploadBytes
+        return uploadBytes
     }
 
     override suspend fun process(event: Event<*>) {
@@ -31,6 +32,15 @@ class UdBytesListener : Listener {
         udBytesDO.status = 0
         udBytesDO.authKey = trackerReq.authKey
         udBytesDO.uploadTime = trackerReq.uploadTime
+
+        val lastOrNull = database.udBytesDO
+            .filter { it.authKey eq udBytesDO.authKey }
+            .filter { it.infoHash eq udBytesDO.infoHash }
+            .lastOrNull()
+        if (lastOrNull != null) {
+            udBytesDO.changeDownload = udBytesDO.download - lastOrNull.download
+            udBytesDO.changeUpload = udBytesDO.upload - lastOrNull.upload
+        }
 
         database.udBytesDO.add(udBytesDO)
     }
