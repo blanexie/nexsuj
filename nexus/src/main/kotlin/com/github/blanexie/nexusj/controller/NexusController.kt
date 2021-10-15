@@ -2,14 +2,14 @@ package com.github.blanexie.nexusj.controller
 
 import cn.hutool.core.util.IdUtil
 import com.github.blanexie.dao.*
+import com.github.blanexie.nexusj.bencode.toBeMap
+import com.github.blanexie.nexusj.bencode.toTorrent
 import com.github.blanexie.nexusj.controller.param.Result
 import com.github.blanexie.nexusj.controller.param.UserQuery
 import com.github.blanexie.nexusj.setting
 import com.github.blanexie.nexusj.support.UserPrincipal
+import com.github.blanexie.nexusj.support.gson
 import com.github.blanexie.nexusj.support.jwtSign
-import com.github.blanexie.nexusj.bencode.toBeMap
-import com.github.blanexie.nexusj.bencode.toTorrent
-import com.github.blanexie.nexusj.gson
 import io.ktor.application.*
 import io.ktor.auth.*
 import io.ktor.http.*
@@ -25,10 +25,6 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.nio.ByteBuffer
 import java.time.LocalDateTime
-import kotlin.collections.List
-import kotlin.collections.hashMapOf
-import kotlin.collections.last
-import kotlin.collections.mapOf
 import kotlin.collections.set
 
 val logger: Logger = LoggerFactory.getLogger("NexusController")!!

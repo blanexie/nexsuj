@@ -1,6 +1,5 @@
 package com.github.blanexie.nexusj.support
 
-import com.github.blanexie.nexusj.gson
 import org.ktorm.schema.BaseTable
 import org.ktorm.schema.Column
 import org.ktorm.schema.SqlType
