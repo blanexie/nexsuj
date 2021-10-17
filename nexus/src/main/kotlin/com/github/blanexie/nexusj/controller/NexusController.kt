@@ -1,11 +1,13 @@
 package com.github.blanexie.nexusj.controller
 
 import cn.hutool.core.util.IdUtil
+import cn.hutool.json.JSONUtil
 import com.github.blanexie.dao.*
 import com.github.blanexie.nexusj.bencode.toBeMap
 import com.github.blanexie.nexusj.bencode.toTorrent
 import com.github.blanexie.nexusj.controller.param.Result
 import com.github.blanexie.nexusj.controller.param.UserQuery
+import com.github.blanexie.nexusj.dateFormat
 import com.github.blanexie.nexusj.setting
 import com.github.blanexie.nexusj.support.UserPrincipal
 import com.github.blanexie.nexusj.support.gson
@@ -62,8 +64,10 @@ fun Route.notAuth() {
             call.respond(Result(403, "登录失败"))
             return@post
         }
-        val toJson = gson.toJson(userDO)
-        val token = call.application.jwtSign(toJson)
+        val userStr =
+            "{'id':${userDO.id} ,'authKey':'${userDO.authKey}','createTime':'${userDO.createTime.format(dateFormat)}', 'nick':'${userDO.nick}', 'email':'${userDO.email}','sex':${userDO.sex}  }"
+
+        val token = call.application.jwtSign(userStr)
         call.respond(Result(body = mapOf("token" to token)))
         return@post
     }
