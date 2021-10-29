@@ -21,6 +21,7 @@ import io.ktor.response.*
 import io.ktor.routing.*
 import org.ktorm.dsl.*
 import org.ktorm.entity.add
+import org.ktorm.entity.filter
 import org.ktorm.entity.first
 import org.ktorm.entity.firstOrNull
 import org.slf4j.Logger
@@ -113,6 +114,14 @@ fun Route.auth() {
         torrentInfoDO.info = pair.second
         torrentInfoDO.description = reqMap["description"] as String
         torrentInfoDO.infoHash = torrent.infoHash
+
+        //查询是否已经存在
+        val existTorrentDO = database.torrentDO.filter { it.infoHash eq torrent.infoHash }
+            .firstOrNull()
+        if (existTorrentDO != null) {
+            call.respond(Result(40000, "不要上传重复的文件"))
+            return@post
+        }
 
         database.useTransaction {
             try {

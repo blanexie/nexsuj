@@ -1,127 +1,150 @@
--- nexus.upbytes definition
+create table peer
+(
+    id int auto_increment
+        primary key,
+    info_hash varchar(100) not null,
+    peer_id varchar(100) not null,
+    port int not null,
+    uploaded bigint not null,
+    downloaded bigint not null,
+    `left` bigint not null,
+    compact int default 1 not null,
+    event varchar(100) not null,
+    ip varchar(100) not null,
+    numwant int null,
+    trackerid varchar(100) null,
+    create_time datetime default CURRENT_TIMESTAMP not null,
+    user_id int not null,
+    last_report_time datetime null,
+    auth_key varchar(100) not null,
+    status int default 0 not null comment '默认0 , 如果-1 就是表示这个peerId被禁用了'
+);
 
-CREATE TABLE `upbytes` (
-                           `id` int NOT NULL AUTO_INCREMENT,
-                           `user_id` int NOT NULL,
-                           `info_hash` varchar(256) NOT NULL,
-                           `upload_time` datetime NOT NULL,
-                           `upload` bigint NOT NULL,
-                           `download` bigint NOT NULL,
-                           `left` bigint NOT NULL,
-                           `change_upload` int DEFAULT NULL,
-                           `change_download` int DEFAULT NULL,
-                           `change_integral` int DEFAULT NULL,
-                           `status` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL DEFAULT '0',
-                           PRIMARY KEY (`id`),
-                           KEY `upbytes_user_id_IDX` (`user_id`,`info_hash`) USING BTREE,
-                           KEY `upbytes_info_hash_IDX` (`info_hash`) USING BTREE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+create index peer_auth_key_IDX
+	on peer (auth_key);
 
+create index peer_info_hash_IDX
+	on peer (info_hash);
 
--- nexus.`user` definition
+create index peer_last_report_time_IDX
+	on peer (last_report_time);
 
-CREATE TABLE `user` (
-                        `id` int NOT NULL AUTO_INCREMENT,
-                        `email` varchar(100) NOT NULL,
-                        `pwd` varchar(100) NOT NULL,
-                        `sex` int DEFAULT NULL,
-                        `nick` varchar(100) DEFAULT NULL,
-                        `upload` bigint unsigned NOT NULL DEFAULT '0',
-                        `download` bigint unsigned NOT NULL DEFAULT '0',
-                        `integral` bigint NOT NULL DEFAULT '0',
-                        `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                        `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                        `auth_key` varchar(100) NOT NULL,
-                        `status` int NOT NULL DEFAULT '0' COMMENT '* 0: 正常用户',
-                        `unlock_time` datetime DEFAULT NULL,
-                        PRIMARY KEY (`id`),
-                        KEY `user_email_IDX` (`email`) USING BTREE,
-                        KEY `user_nick_IDX` (`nick`) USING BTREE,
-                        KEY `user_auth_key_IDX` (`auth_key`) USING BTREE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+create index peer_peer_id_IDX
+	on peer (peer_id);
 
+create index peer_user_id_IDX
+	on peer (user_id);
 
--- nexus.user_torrent definition
+create table torrent
+(
+    id int auto_increment
+        primary key,
+    announce varchar(100) not null,
+    created_by varchar(100) null,
+    comment varchar(1024) null,
+    creation_date bigint null,
+    encoding varchar(100) null,
+    info_hash varchar(100) not null,
+    name varchar(100) null,
+    private int default 1 not null,
+    files json null,
+    size bigint not null,
+    user_id int not null,
+    status int default 0 not null,
+    upload_time datetime default CURRENT_TIMESTAMP not null,
+    type varchar(100) not null,
+    labels json not null,
+    title varchar(100) not null,
+    ratio_up float default 1 not null,
+    ratio_down float default 1 not null,
+    ration_time datetime null
+);
 
-CREATE TABLE `user_torrent` (
-                                `id` int NOT NULL AUTO_INCREMENT,
-                                `info_hash` varchar(100) NOT NULL,
-                                `user_id` int NOT NULL,
-                                `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                                `auth_key` varchar(100) NOT NULL,
-                                `status` int NOT NULL DEFAULT '0',
-                                PRIMARY KEY (`id`),
-                                UNIQUE KEY `user_torrent_info_hash_IDX` (`info_hash`,`auth_key`) USING BTREE,
-                                KEY `user_torrent_auth_key_IDX` (`auth_key`) USING BTREE,
-                                KEY `user_torrent_user_id_IDX` (`user_id`) USING BTREE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+create index torrent_info_hash_IDX
+	on torrent (info_hash);
 
+create index torrent_name_IDX
+	on torrent (name);
 
--- nexus.peer definition
+create index torrent_title_IDX
+	on torrent (title);
 
-CREATE TABLE `peer` (
-                        `id` int NOT NULL AUTO_INCREMENT,
-                        `info_hash` varchar(100) NOT NULL,
-                        `peer_id` varchar(100) NOT NULL,
-                        `port` int NOT NULL,
-                        `uploaded` bigint NOT NULL,
-                        `downloaded` bigint NOT NULL,
-                        `left` bigint NOT NULL,
-                        `compact` int NOT NULL DEFAULT '1',
-                        `event` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
-                        `ip` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
-                        `numwant` int DEFAULT NULL,
-                        `trackerid` varchar(100) DEFAULT NULL,
-                        `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                        `user_id` int NOT NULL,
-                        `last_report_time` datetime DEFAULT NULL,
-                        `auth_key` varchar(100) NOT NULL,
-                        `status` int NOT NULL DEFAULT '0' COMMENT '默认0 , 如果-1 就是表示这个peerId被禁用了',
-                        PRIMARY KEY (`id`),
-                        KEY `peer_info_hash_IDX` (`info_hash`) USING BTREE,
-                        KEY `peer_peer_id_IDX` (`peer_id`) USING BTREE,
-                        KEY `peer_auth_key_IDX` (`auth_key`) USING BTREE,
-                        KEY `peer_last_report_time_IDX` (`last_report_time`) USING BTREE,
-                        KEY `peer_user_id_IDX` (`user_id`) USING BTREE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+create index torrent_user_id_IDX
+	on torrent (user_id);
 
+create table torrent_info
+(
+    info_hash varchar(100) not null
+        primary key,
+    info blob not null,
+    description text not null
+);
 
--- nexus.torrent definition
+create table upbytes
+(
+    id int auto_increment
+        primary key,
+    user_id int not null,
+    info_hash varchar(256) not null,
+    upload_time datetime not null,
+    upload bigint not null,
+    download bigint not null,
+    `left` bigint not null,
+    change_upload int null,
+    change_download int null,
+    change_integral int null,
+    status varchar(100) default '0' not null
+);
 
-CREATE TABLE `torrent` (
-                           `id` int NOT NULL AUTO_INCREMENT,
-                           `announce` varchar(100) NOT NULL,
-                           `created_by` varchar(100) DEFAULT NULL,
-                           `comment` varchar(1024) DEFAULT NULL,
-                           `creation_date` datetime DEFAULT NULL,
-                           `encoding` varchar(100) DEFAULT NULL,
-                           `info_hash` varchar(100) NOT NULL,
-                           `name` varchar(100) DEFAULT NULL,
-                           `private` int NOT NULL DEFAULT '1',
-                           `files` json NOT NULL,
-                           `size` bigint NOT NULL,
-                           `user_id` int NOT NULL,
-                           `status` int NOT NULL DEFAULT '0',
-                           `upload_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                           `type` varchar(100) NOT NULL,
-                           `labels` json NOT NULL,
-                           `title` varchar(100) NOT NULL,
-                           `ratio_up` float NOT NULL DEFAULT '1',
-                           `ratio_down` float NOT NULL DEFAULT '1',
-                           `ration_time` datetime DEFAULT NULL,
-                           PRIMARY KEY (`id`),
-                           KEY `torrent_info_hash_IDX` (`info_hash`) USING BTREE,
-                           KEY `torrent_name_IDX` (`name`) USING BTREE,
-                           KEY `torrent_title_IDX` (`title`) USING BTREE,
-                           KEY `torrent_user_id_IDX` (`user_id`) USING BTREE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+create index upbytes_info_hash_IDX
+	on upbytes (info_hash);
 
+create index upbytes_user_id_IDX
+	on upbytes (user_id, info_hash);
 
--- nexus.torrent_info definition
+create table user
+(
+    id int auto_increment
+        primary key,
+    email varchar(100) not null,
+    pwd varchar(100) not null,
+    sex int null,
+    nick varchar(100) null,
+    upload bigint unsigned default '0' not null,
+    download bigint unsigned default '0' not null,
+    integral bigint default 0 not null,
+    create_time datetime default CURRENT_TIMESTAMP not null,
+    update_time datetime default CURRENT_TIMESTAMP not null,
+    auth_key varchar(100) not null,
+    status int default 0 not null comment '* 0: 正常用户',
+    unlock_time datetime null
+);
 
-CREATE TABLE `torrent_info` (
-                                `info_hash` varchar(100) NOT NULL,
-                                `info` blob NOT NULL,
-                                `description` text NOT NULL,
-                                PRIMARY KEY (`info_hash`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+create index user_auth_key_IDX
+	on user (auth_key);
+
+create index user_email_IDX
+	on user (email);
+
+create index user_nick_IDX
+	on user (nick);
+
+create table user_torrent
+(
+    id int auto_increment
+        primary key,
+    info_hash varchar(100) not null,
+    user_id int not null,
+    create_time datetime default CURRENT_TIMESTAMP not null,
+    auth_key varchar(100) not null,
+    status int default 0 not null,
+    constraint user_torrent_info_hash_IDX
+        unique (info_hash, auth_key)
+);
+
+create index user_torrent_auth_key_IDX
+	on user_torrent (auth_key);
+
+create index user_torrent_user_id_IDX
+	on user_torrent (user_id);
+

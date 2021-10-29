@@ -8,7 +8,6 @@ import com.github.blanexie.nexusj.controller.auth
 import com.github.blanexie.nexusj.controller.notAuth
 import com.github.blanexie.nexusj.support.SimpleJWT
 import com.github.blanexie.nexusj.support.UserPrincipal
-import com.github.blanexie.nexusj.support.gson
 import com.github.blanexie.nexusj.support.jwtDecode
 import com.github.blanexie.tracker.server.tracker
 import io.ktor.application.*
@@ -23,7 +22,8 @@ import java.time.format.DateTimeFormatter
 
 
 val setting = Setting(ClassPathResource(System.getProperty("properties.path") ?: "app.properties").path)
-val dateFormat= DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
+val dateFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")!!
+
 fun main(args: Array<String>): Unit {
     io.ktor.server.netty.EngineMain.main(args)
 }
@@ -54,7 +54,7 @@ fun Application.nexus(testing: Boolean = true) {
                     userDO.nick = fromJson["nick"] as String
                     userDO.email = fromJson["email"] as String
                     userDO.authKey = fromJson["authKey"] as String
-                    userDO.createTime = LocalDateTime.parse( fromJson["createTime"]  as String, dateFormat)
+                    userDO.createTime = LocalDateTime.parse(fromJson["createTime"] as String, dateFormat)
                     userDO.sex = fromJson["sex"] as Int
                     UserPrincipal(userDO)
                 } else {
