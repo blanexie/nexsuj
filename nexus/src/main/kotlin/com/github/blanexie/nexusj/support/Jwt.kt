@@ -8,7 +8,6 @@ import cn.hutool.crypto.symmetric.AES
 import com.auth0.jwt.JWT
 import com.auth0.jwt.JWTVerifier
 import com.auth0.jwt.algorithms.Algorithm
-import com.github.blanexie.nexusj.setting
 import io.ktor.application.*
 import java.util.*
 

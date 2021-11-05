@@ -1,18 +1,12 @@
 package com.github.blanexie.nexusj.controller
 
 import cn.hutool.core.util.IdUtil
-import cn.hutool.json.JSONUtil
 import com.github.blanexie.dao.*
 import com.github.blanexie.nexusj.bencode.toBeMap
 import com.github.blanexie.nexusj.bencode.toTorrent
 import com.github.blanexie.nexusj.controller.param.Result
 import com.github.blanexie.nexusj.controller.param.UserQuery
-import com.github.blanexie.nexusj.dateFormat
-import com.github.blanexie.nexusj.setting
-import com.github.blanexie.nexusj.support.UserPrincipal
-import com.github.blanexie.nexusj.support.database
-import com.github.blanexie.nexusj.support.gson
-import com.github.blanexie.nexusj.support.jwtSign
+import com.github.blanexie.nexusj.support.*
 import io.ktor.application.*
 import io.ktor.auth.*
 import io.ktor.http.*

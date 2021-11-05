@@ -1,6 +1,5 @@
 package com.github.blanexie.nexusj.support
 
-import com.github.blanexie.nexusj.setting
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import org.ktorm.database.Database

@@ -1,7 +1,6 @@
 package com.github.blanexie.nexusj.controller.param
 
-import com.github.blanexie.tracker.server.getIpAddress
-import io.ktor.application.*
+import com.github.blanexie.nexusj.controller.getIpAddress
 import io.ktor.request.*
 import java.time.LocalDateTime
 
