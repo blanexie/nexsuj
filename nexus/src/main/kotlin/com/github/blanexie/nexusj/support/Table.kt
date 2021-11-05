@@ -10,7 +10,7 @@ import org.ktorm.schema.*
 import java.time.LocalDateTime
 
 
-/*********************** 上报流量流水表, 根据这个流水确定用户的总上传 下载 和积分 , 这个表需要定期清理,  ******************************/
+/*********************** 上报流量流水表, 根据这个流水确定用户的总上传 下载 和积分 , 这个表需要定期清理 ******************************/
 val Database.udBytesDO get() = this.sequenceOf(UdBytes)
 
 interface UdBytesDO : Entity<UdBytesDO> {
