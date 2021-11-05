@@ -6,9 +6,7 @@ import cn.hutool.setting.Setting
 import com.github.blanexie.dao.UserDO
 import com.github.blanexie.nexusj.controller.auth
 import com.github.blanexie.nexusj.controller.notAuth
-import com.github.blanexie.nexusj.support.SimpleJWT
-import com.github.blanexie.nexusj.support.UserPrincipal
-import com.github.blanexie.nexusj.support.jwtDecode
+import com.github.blanexie.nexusj.support.*
 import com.github.blanexie.tracker.server.tracker
 import io.ktor.application.*
 import io.ktor.auth.*
@@ -29,6 +27,18 @@ fun main(args: Array<String>): Unit {
 }
 
 
+fun buildUserPrincipal(jwtDecode: String): UserPrincipal {
+    val fromJson = JSONUtil.parseObj(jwtDecode)
+    val userDO = UserDO()
+    userDO.id = fromJson["id"] as Int
+    userDO.nick = fromJson["nick"] as String
+    userDO.email = fromJson["email"] as String
+    userDO.authKey = fromJson["authKey"] as String
+    userDO.createTime = LocalDateTime.parse(fromJson["createTime"] as String, dateFormat)
+    userDO.sex = fromJson["sex"] as Int
+    return UserPrincipal(userDO)
+}
+
 fun Application.nexus(testing: Boolean = true) {
     val simpleJWT = SimpleJWT()
     install(AutoHeadResponse)
@@ -37,6 +47,8 @@ fun Application.nexus(testing: Boolean = true) {
     install(ContentNegotiation) {
         gson {
             setDateFormat(DateFormat.LONG)
+            registerTypeAdapter(LocalDateTime::class.java, JsonDeserializerImpl())
+            registerTypeAdapter(LocalDateTime::class.java, JsonSerializerImpl())
             setPrettyPrinting()
         }
     }
@@ -48,15 +60,7 @@ fun Application.nexus(testing: Boolean = true) {
                 if (credential.payload.audience.contains(simpleJWT.audience())) {
                     val subject = credential.payload.subject
                     val jwtDecode = jwtDecode(subject)
-                    val fromJson = JSONUtil.parseObj(jwtDecode)
-                    val userDO = UserDO()
-                    userDO.id = fromJson["id"] as Int
-                    userDO.nick = fromJson["nick"] as String
-                    userDO.email = fromJson["email"] as String
-                    userDO.authKey = fromJson["authKey"] as String
-                    userDO.createTime = LocalDateTime.parse(fromJson["createTime"] as String, dateFormat)
-                    userDO.sex = fromJson["sex"] as Int
-                    UserPrincipal(userDO)
+                    buildUserPrincipal(jwtDecode)
                 } else {
                     null
                 }

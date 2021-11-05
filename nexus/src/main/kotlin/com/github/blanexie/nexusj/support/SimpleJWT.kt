@@ -1,10 +1,7 @@
 package com.github.blanexie.nexusj.support
 
-import cn.hutool.core.codec.Base64
 import cn.hutool.core.date.DateUtil
-import cn.hutool.core.util.HexUtil
 import cn.hutool.core.util.ZipUtil
-import cn.hutool.crypto.SecureUtil
 import cn.hutool.crypto.digest.DigestAlgorithm
 import cn.hutool.crypto.digest.Digester
 import cn.hutool.crypto.symmetric.AES
@@ -16,11 +13,11 @@ import io.ktor.application.*
 import java.util.*
 
 
-val jwtAesKey = setting.get("jwt.aesKey")!!
-val issuer = setting.get("jwt.domain")!!
-val audience = setting.get("jwt.audience")!!
-val realm = setting.get("jwt.realm")!!
-val secret = setting.get("jwt.secret")!!
+val jwtAesKey = setting["jwt.aesKey"]!!
+val issuer = setting["jwt.domain"]!!
+val audience = setting["jwt.audience"]!!
+val realm = setting["jwt.realm"]!!
+val secret = setting["jwt.secret"]!!
 
 var algorithm: Algorithm = Algorithm.HMAC256(secret)
 

@@ -5,6 +5,7 @@ import com.github.blanexie.nexusj.support.event.eventBus
 import com.github.blanexie.nexusj.support.event.uploadBytes
 import com.github.blanexie.nexusj.controller.param.TrackerReq
 import com.github.blanexie.nexusj.bencode.BeObj
+import com.github.blanexie.nexusj.support.database
 import io.ktor.application.*
 import io.ktor.features.*
 import io.ktor.http.*

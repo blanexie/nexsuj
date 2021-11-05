@@ -10,6 +10,7 @@ import com.github.blanexie.nexusj.controller.param.UserQuery
 import com.github.blanexie.nexusj.dateFormat
 import com.github.blanexie.nexusj.setting
 import com.github.blanexie.nexusj.support.UserPrincipal
+import com.github.blanexie.nexusj.support.database
 import com.github.blanexie.nexusj.support.gson
 import com.github.blanexie.nexusj.support.jwtSign
 import io.ktor.application.*
@@ -65,6 +66,7 @@ fun Route.notAuth() {
             call.respond(Result(403, "登录失败"))
             return@post
         }
+
         val userStr =
             "{'id':${userDO.id} ,'authKey':'${userDO.authKey}','createTime':'${userDO.createTime.format(dateFormat)}', 'nick':'${userDO.nick}', 'email':'${userDO.email}','sex':${userDO.sex}  }"
 
@@ -79,7 +81,7 @@ fun Route.notAuth() {
 fun Route.auth() {
 
     /**
-     * 上传种子文件
+     * 上传文件
      */
     post("/upload/torrent") {
         val principal = call.authentication.principal<UserPrincipal>()!!
@@ -137,7 +139,7 @@ fun Route.auth() {
     }
 
     /**
-     * 下载种子文件
+     * 下载 文件
      */
     get("/download/torrent") {
         val principal = call.authentication.principal<UserPrincipal>()!!
