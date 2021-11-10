@@ -83,7 +83,7 @@ class BencodeTest {
 
     @Test
     fun beTorrent2() {
-        val classPathResource = ClassPathResource("signleFile.torrent")
+        val classPathResource = ClassPathResource("torrent.torrent")
         val readBytes = classPathResource.readBytes()
         val wrap = ByteBuffer.wrap(readBytes)
         val benDecode = toBeObj(wrap)

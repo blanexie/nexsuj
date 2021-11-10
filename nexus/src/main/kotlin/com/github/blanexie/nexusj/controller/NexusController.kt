@@ -69,6 +69,56 @@ fun Route.notAuth() {
         return@post
     }
 
+
+    /**
+     * 下载 文件
+     */
+    get("/download/torrent") {
+       // val principal = call.authentication.principal<UserPrincipal>()!!
+        val u =UserDO()
+        u.email="abc@qq.com"
+        u.id=1
+        u.authKey="9c69a0b7707840488e793019e9e8e42b"
+        u.nick="abc"
+        u.sex=1
+        u.status= 0
+        val user = u
+
+        val id = call.request.queryParameters["id"]!!.toInt()
+        val torrentDO = database.torrentDO.first { it.id eq id }
+
+        if (torrentDO == null) {
+            call.respond(Result(code = 404, message = "下载的种子不存在"))
+            return@get
+        }
+        //增加一条userTorrent记录
+        var userTorrentDO =
+            database.userTorrentDO.firstOrNull { (it.infoHash eq torrentDO.infoHash) and (it.userId eq user.id) }
+        if (userTorrentDO == null) {
+            userTorrentDO = UserTorrentDO()
+            userTorrentDO.infoHash = torrentDO.infoHash
+            userTorrentDO.userId = user.id
+            userTorrentDO.createTime = LocalDateTime.now()
+            userTorrentDO.authKey = IdUtil.fastSimpleUUID()
+            userTorrentDO.status = 0
+            database.userTorrentDO.add(userTorrentDO)
+        }
+
+        //构建下载者的announce
+        val announceUrl = setting["pt.announce.url"]
+        torrentDO.announce = "${announceUrl}?auth_key=${userTorrentDO.authKey}"
+
+        val info = database.from(TorrentInfo).select(TorrentInfo.infoHash, TorrentInfo.info)
+            .where { TorrentInfo.infoHash eq torrentDO.infoHash }.limit(1)
+            .map { it.getBytes(2) }
+            .last()
+
+        //返回
+        call.respondBytes(
+            bytes = toBeMap(torrentDO, info!!),
+            contentType = ContentType.parse("application/x-bittorrent")
+        )
+    }
 }
 
 
@@ -132,48 +182,7 @@ fun Route.auth() {
         call.respond(Result())
     }
 
-    /**
-     * 下载 文件
-     */
-    get("/download/torrent") {
-        val principal = call.authentication.principal<UserPrincipal>()!!
-        val user = principal.user!!
 
-        val id = call.request.queryParameters["id"]!!.toInt()
-        val torrentDO = database.torrentDO.first { it.id eq id }
-
-        if (torrentDO == null) {
-            call.respond(Result(code = 404, message = "下载的种子不存在"))
-            return@get
-        }
-        //增加一条userTorrent记录
-        var userTorrentDO =
-            database.userTorrentDO.firstOrNull { (it.infoHash eq torrentDO.infoHash) and (it.userId eq user.id) }
-        if (userTorrentDO == null) {
-            userTorrentDO = UserTorrentDO()
-            userTorrentDO.infoHash = torrentDO.infoHash
-            userTorrentDO.userId = user.id
-            userTorrentDO.createTime = LocalDateTime.now()
-            userTorrentDO.authKey = IdUtil.fastSimpleUUID()
-            userTorrentDO.status = 0
-            database.userTorrentDO.add(userTorrentDO)
-        }
-
-        //构建下载者的announce
-        val announceUrl = setting["pt.announce.url"]
-        torrentDO.announce = "${announceUrl}?auth_key=${userTorrentDO.authKey}"
-
-        val info = database.from(TorrentInfo).select(TorrentInfo.infoHash, TorrentInfo.info)
-            .where { TorrentInfo.infoHash eq torrentDO.infoHash }.limit(1)
-            .map { it.getBytes(2) }
-            .last()
-
-        //返回
-        call.respondBytes(
-            bytes = toBeMap(torrentDO, info!!),
-            contentType = ContentType.parse("application/x-bittorrent")
-        )
-    }
 
 
 }

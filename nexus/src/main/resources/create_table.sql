@@ -1,3 +1,8 @@
+
+
+-- docker run -p 8306:3306 --name  mysql -v /home/mysql:/var/lib/mysql -e MYSQL_ROOT_PASSWORD=123456 -d mysql:8.0.27
+
+
 create table peer
 (
     id int auto_increment

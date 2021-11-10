@@ -52,6 +52,7 @@ fun Application.nexus(testing: Boolean = true) {
             verifier(simpleJWT.verifier)
             this.realm = simpleJWT.realm()
             validate { credential ->
+
                 if (credential.payload.audience.contains(simpleJWT.audience())) {
                     val subject = credential.payload.subject
                     val jwtDecode = jwtDecode(subject)
