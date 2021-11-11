@@ -1,14 +1,16 @@
 package com.github.blanexie.nexusj.bencode
 
 import cn.hutool.crypto.digest.DigestUtil
+import com.dampcake.bencode.Bencode
+import com.dampcake.bencode.Type
 import com.github.blanexie.dao.TorrentDO
 import java.nio.ByteBuffer
 
+val bencode = Bencode()
 
 fun toBeMap(torrent: TorrentDO, info: ByteArray): ByteArray {
     val beMap = hashMapOf<String, Any?>()
     beMap["announce"] = torrent.announce
-
     torrent.createdBy?.let {
         beMap["created by"] = it
     }
@@ -21,41 +23,26 @@ fun toBeMap(torrent: TorrentDO, info: ByteArray): ByteArray {
     torrent.encoding?.let {
         beMap["encoding"] = it
     }
-    val beObj = BeObj(beMap)
-    val toBen = beObj.toBen()
-
-    val copyInto = toBen.copyInto(ByteArray(toBen.size + info.size), 0, 0, toBen.size - 1)
-
-    val copyInto1 = info.copyInto(copyInto, toBen.size - 1, 0)
-
-    copyInto1[toBen.size + info.size - 1] = 'e'.code.toByte()
-    return copyInto1
+    val infoDO = bencode.decode(info, Type.DICTIONARY)
+    beMap["info"] = infoDO
+    return bencode.encode(beMap)
 }
 
 
-fun toTorrent(byteBuffer: ByteBuffer): Pair<TorrentDO, ByteArray> {
-    val beObj = toBeObj(byteBuffer)
-    return toTorrent(beObj)
-}
-
-fun toTorrent(beMap: BeObj): Pair<TorrentDO, ByteArray> {
-    if (beMap.type != BeType.BeMap) {
-        throw Exception("BeMap类型才能生成种子文件")
-    }
-    val beMapData = beMap.getValue() as Map<String, Any>
+fun toTorrent(beMapData: Map<String, Any>): Pair<TorrentDO, ByteArray> {
     //开始处理文件 外部字段
-    val announce = (beMapData["announce"] as ByteArray).toStr()
-    val comment = (beMapData["comment"] as ByteArray?)?.toStr()
+    val announce = beMapData["announce"] as String
+    val comment = beMapData["comment"] as String?
     val creationDate = beMapData["creation date"] as Long?
-    val createdBy = (beMapData["created by"] as ByteArray?)?.toStr()
-    val encoding = (beMapData["encoding"] as ByteArray?)?.toStr()
+    val createdBy = beMapData["created by"] as String?
+    val encoding = beMapData["encoding"] as String?
 
     //开始处理Info中字段
     val infoMap = beMapData["info"] as Map<String, Any>
     //计算infohash值
-    val toBen = BeObj(infoMap).toBen()
-    val infoHash = urlEncode(DigestUtil.sha1(toBen))
-    val name = (infoMap["name"] as ByteArray).toStr()
+    val infoBytes = bencode.encode(infoMap)
+    val infoHash = urlEncode(DigestUtil.sha1(infoBytes))
+    val name = infoMap["name"] as String
 
     val private = infoMap["private"] as Long
     //开始处理单文件和多文件
@@ -72,7 +59,7 @@ fun toTorrent(beMap: BeObj): Pair<TorrentDO, ByteArray> {
         announce, createdBy, comment, creationDate, encoding, infoHash, size,
         name, private.toInt(), files
     )
-    return buildTorrent to toBen
+    return buildTorrent to infoBytes
 }
 
 
@@ -105,88 +92,8 @@ private fun buildTorrent(
 }
 
 
-/**
- * 解码操作方法, 将种子文件转换成定义的BeMap对象
- */
-fun toBeObj(byteBuffer: ByteBuffer): BeObj {
-    val byte = byteBuffer.get(byteBuffer.position())
-    if (byte.toInt().toChar() == 'i') {
-        return decodeInt(byteBuffer)
-    }
-    if (byte.toInt().toChar() == 'l') {
-        return decodeList(byteBuffer)
-    }
-    if (byte.toInt().toChar() == 'd') {
-        return decodeMap(byteBuffer)
-    }
-    return decodeStr(byteBuffer)
-}
-
 fun Byte.asChar(): Char {
     return this.toInt().toChar()
-}
-
-private fun decodeMap(byteBuffer: ByteBuffer): BeObj {
-    byteBuffer.get()
-    val map = mutableMapOf<String, Any>()
-    while (true) {
-        val key = toBeObj(byteBuffer)
-        val value = toBeObj(byteBuffer)
-        map[key.toString()] = value.getValue()
-        val byte = byteBuffer.get(byteBuffer.position())
-        if (byte.asChar() == 'e') {
-            byteBuffer.get()
-            return BeObj(map)
-        }
-    }
-}
-
-private fun decodeList(byteBuffer: ByteBuffer): BeObj {
-    byteBuffer.get()
-    val value = arrayListOf<Any>()
-    while (true) {
-        val beObj = toBeObj(byteBuffer)
-        value.add(beObj.getValue())
-        val byte = byteBuffer.get(byteBuffer.position())
-        if (byte.asChar() == 'e') {
-            byteBuffer.get()
-            return BeObj(value)
-        }
-    }
-}
-
-private fun decodeStr(byteBuffer: ByteBuffer): BeObj {
-    val bytes = arrayListOf<Byte>()
-    while (true) {
-        val byte = byteBuffer.get()
-        if (byte.asChar() == ':') {
-            val string = String(bytes.toByteArray())
-            var length = string.toInt()
-            val data = ByteArray(length)
-            byteBuffer.get(data)
-            return BeObj(data)
-        } else {
-            bytes.add(byte)
-        }
-    }
-}
-
-private fun decodeInt(byteBuffer: ByteBuffer): BeObj {
-    byteBuffer.get()
-    val bytes = arrayListOf<Byte>()
-    while (true) {
-        val byte = byteBuffer.get()
-        if (byte.asChar() == 'e') {
-            val toInt = String(bytes.toByteArray()).toLong()
-            return BeObj(toInt)
-        } else {
-            bytes.add(byte)
-        }
-    }
-}
-
-fun ByteArray.toString(): String {
-    return String(this)
 }
 
 
@@ -212,7 +119,3 @@ fun urlEncode(bytes: ByteArray): String {
     return buf.toString()
 }
 
-
-fun ByteArray.toStr(): String {
-    return String(this)
-}
