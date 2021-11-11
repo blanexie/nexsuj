@@ -45,12 +45,14 @@ class BeObj(private val obj: Any) {
 
             BeType.BeList -> {
                 val list = obj as List<*>
-                return list.map { BeObj(it!!) }.map { it.toBen() }.reduce { acc, bytes -> acc.plus(bytes) }
+                val reduce = list.map { BeObj(it!!) }.map { it.toBen() }.reduce { acc, bytes -> acc.plus(bytes) }
+                return  "l".toByteArray().plus( reduce.plus("e".toByteArray()))
             }
             BeType.BeMap -> {
                 val map = obj as Map<*, *>
-                return map.map { BeObj(it.key!!).toBen().plus(BeObj(it.value!!).toBen()) }
+                val reduce = map.map { BeObj(it.key!!).toBen().plus(BeObj(it.value!!).toBen()) }
                     .reduce { acc, bytes -> acc.plus(bytes) }
+                return  "d".toByteArray().plus( reduce.plus("e".toByteArray()))
             }
             else -> throw Exception("传入正确的Bencode编码类型")
         }
