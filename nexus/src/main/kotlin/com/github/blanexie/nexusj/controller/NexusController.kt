@@ -1,7 +1,9 @@
 package com.github.blanexie.nexusj.controller
 
 import cn.hutool.core.util.IdUtil
+import com.dampcake.bencode.BencodeInputStream
 import com.github.blanexie.dao.*
+import com.github.blanexie.nexusj.bencode.bencode
 import com.github.blanexie.nexusj.bencode.toBeMap
 import com.github.blanexie.nexusj.bencode.toTorrent
 import com.github.blanexie.nexusj.controller.param.Result
@@ -14,6 +16,7 @@ import io.ktor.http.content.*
 import io.ktor.request.*
 import io.ktor.response.*
 import io.ktor.routing.*
+import io.ktor.util.Identity.decode
 import org.ktorm.dsl.*
 import org.ktorm.entity.add
 import org.ktorm.entity.filter
@@ -130,34 +133,20 @@ fun Route.auth() {
     post("/upload/torrent") {
         val principal = call.authentication.principal<UserPrincipal>()!!
         val user = principal.user!!
-
         val multipartData = call.receiveMultipart()
-        val reqMap = hashMapOf<String, Any>()
-        multipartData.forEachPart { partData ->
-            when (partData) {
-                is PartData.FileItem -> {
-                    val torrent = toTorrent(ByteBuffer.wrap(partData.streamProvider().readBytes()))
-                    reqMap["torrent"] = torrent
-                }
-                is PartData.FormItem -> {
-                    reqMap[partData.name!!] = partData.value
-                }
-                else -> {
+        val reqMap = receiveFrom(multipartData)
 
-                }
-            }
-        }
-
-        val pair = reqMap["torrent"] as Pair<TorrentDO, ByteArray>
-        val torrent = pair.first
+        val toTorrent = toTorrent(reqMap["torrent"] as Map<String,Any>)
+        val torrent = toTorrent.first
         torrent.userId = user.id
         torrent.status = 0
         torrent.uploadTime = LocalDateTime.now()
         torrent.type = reqMap["type"] as String
         torrent.labels = gson.fromJson<List<String>>(reqMap["labels"] as String, List::class.java)
         torrent.title = reqMap["title"] as String
+
         val torrentInfoDO = TorrentInfoDO()
-        torrentInfoDO.info = pair.second
+        torrentInfoDO.info = toTorrent.second
         torrentInfoDO.description = reqMap["description"] as String
         torrentInfoDO.infoHash = torrent.infoHash
 
@@ -187,3 +176,20 @@ fun Route.auth() {
 
 }
 
+suspend fun receiveFrom(multipartData:MultiPartData):Map<String, Any>{
+    val reqMap = hashMapOf<String, Any>()
+    multipartData.forEachPart { partData ->
+        when (partData) {
+            is PartData.FileItem -> {
+                reqMap["torrent"]= BencodeInputStream(partData.streamProvider(), charset("utf8"),true).readDictionary()
+            }
+            is PartData.FormItem -> {
+                reqMap[partData.name!!] = partData.value
+            }
+            else -> {
+
+            }
+        }
+    }
+    return  reqMap
+}

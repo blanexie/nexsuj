@@ -278,7 +278,6 @@ interface TorrentDO : Entity<TorrentDO> {
     var ratioDown:Float
     //上传下载 回复正常的时间点
     var rationTime:LocalDateTime
-
 }
 
 

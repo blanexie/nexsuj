@@ -4,9 +4,12 @@ import cn.hutool.crypto.digest.DigestUtil
 import com.dampcake.bencode.Bencode
 import com.dampcake.bencode.Type
 import com.github.blanexie.dao.TorrentDO
+import io.ktor.util.*
 import java.nio.ByteBuffer
+import java.nio.charset.Charset
+import java.time.LocalDateTime
 
-val bencode = Bencode()
+val bencode = Bencode(charset("utf8"),true)
 
 fun toBeMap(torrent: TorrentDO, info: ByteArray): ByteArray {
     val beMap = hashMapOf<String, Any?>()
@@ -31,18 +34,18 @@ fun toBeMap(torrent: TorrentDO, info: ByteArray): ByteArray {
 
 fun toTorrent(beMapData: Map<String, Any>): Pair<TorrentDO, ByteArray> {
     //开始处理文件 外部字段
-    val announce = beMapData["announce"] as String
-    val comment = beMapData["comment"] as String?
-    val creationDate = beMapData["creation date"] as Long?
-    val createdBy = beMapData["created by"] as String?
-    val encoding = beMapData["encoding"] as String?
+    val announce = beMapData["announce"].toStr()
+    val comment = beMapData["comment"].toStr()
+    val creationDate = beMapData["creation date"] as Long
+    val createdBy = beMapData["created by"].toStr()
+    val encoding = beMapData["encoding"].toStr()
 
     //开始处理Info中字段
     val infoMap = beMapData["info"] as Map<String, Any>
     //计算infohash值
     val infoBytes = bencode.encode(infoMap)
     val infoHash = urlEncode(DigestUtil.sha1(infoBytes))
-    val name = infoMap["name"] as String
+    val name = infoMap["name"].toStr()
 
     val private = infoMap["private"] as Long
     //开始处理单文件和多文件
@@ -62,6 +65,18 @@ fun toTorrent(beMapData: Map<String, Any>): Pair<TorrentDO, ByteArray> {
     return buildTorrent to infoBytes
 }
 
+private fun Any?.toStr(): String {
+    if(this is ByteBuffer){
+        return  String( this.array())
+    }else{
+       return this.toString()
+    }
+}
+
+@InternalAPI
+ fun ByteBuffer.toStr(): String {
+    return Charsets.UTF_8.decode(this).toString()
+}
 
 private fun buildTorrent(
     announce: String,

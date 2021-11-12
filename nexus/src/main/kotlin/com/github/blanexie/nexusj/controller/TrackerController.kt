@@ -3,7 +3,7 @@ package com.github.blanexie.nexusj.controller
 import com.github.blanexie.dao.PeerDO
 import com.github.blanexie.dao.peerDO
 import com.github.blanexie.dao.userTorrentDO
-import com.github.blanexie.nexusj.bencode.BeObj
+import com.github.blanexie.nexusj.bencode.bencode
 import com.github.blanexie.nexusj.controller.param.TrackerReq
 import com.github.blanexie.nexusj.support.database
 import com.github.blanexie.nexusj.support.event.eventBus
@@ -33,7 +33,7 @@ fun Route.tracker() {
         // 0. 检查访问的客户端是否符合要求
         val errorMsg = blockBrowser(call.request)
         if (errorMsg != null) {
-            call.respond(BeObj(hashMapOf("failReason" to errorMsg)).toBen())
+            call.respond(bencode.encode(hashMapOf("failReason" to errorMsg)))
             return@get
         }
 
@@ -41,7 +41,7 @@ fun Route.tracker() {
         val userTorrentDO =
             database.userTorrentDO.findLast { (it.authKey eq trackerReq.authKey) and (it.infoHash eq trackerReq.infoHash) }
         if (userTorrentDO == null) {
-            call.respond(BeObj(hashMapOf("failReason" to "你还没有下载这个种子无法开始下载")).toBen())
+            call.respond(bencode.encode(hashMapOf("failReason" to "你还没有下载这个种子无法开始下载")))
             return@get
         }
 
@@ -61,7 +61,7 @@ fun Route.tracker() {
             database.peerDO.add(peer)
         } else {
             if (peer.peerId != trackerReq.peerId) {
-                call.respond(BeObj(hashMapOf("failReason" to "一个种子只能一个客户端下载")).toBen())
+                call.respond(bencode.encode(hashMapOf("failReason" to "一个种子只能一个客户端下载")))
                 return@get
             } else {
                 peer.downloaded = trackerReq.downloaded
@@ -88,7 +88,7 @@ fun Route.tracker() {
         //3. 上报用户下载和上传的数据
         eventBus.publish(uploadBytes, trackerReq)
 
-        call.respondBytes(BeObj(resp).toBen(), contentType = ContentType.parse("text/plain"))
+        call.respondBytes(bencode.encode(resp), contentType = ContentType.parse("text/plain"))
     }
 
 }
