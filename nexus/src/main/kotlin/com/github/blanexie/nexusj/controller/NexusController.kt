@@ -3,7 +3,6 @@ package com.github.blanexie.nexusj.controller
 import cn.hutool.core.util.IdUtil
 import com.dampcake.bencode.BencodeInputStream
 import com.github.blanexie.dao.*
-import com.github.blanexie.nexusj.bencode.bencode
 import com.github.blanexie.nexusj.bencode.toBeMap
 import com.github.blanexie.nexusj.bencode.toTorrent
 import com.github.blanexie.nexusj.controller.param.Result
@@ -16,7 +15,6 @@ import io.ktor.http.content.*
 import io.ktor.request.*
 import io.ktor.response.*
 import io.ktor.routing.*
-import io.ktor.util.Identity.decode
 import org.ktorm.dsl.*
 import org.ktorm.entity.add
 import org.ktorm.entity.filter
@@ -24,7 +22,6 @@ import org.ktorm.entity.first
 import org.ktorm.entity.firstOrNull
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import java.nio.ByteBuffer
 import java.time.LocalDateTime
 import kotlin.collections.set
 
@@ -145,7 +142,7 @@ fun Route.auth() {
         torrent.labels = gson.fromJson<List<String>>(reqMap["labels"] as String, List::class.java)
         torrent.title = reqMap["title"] as String
 
-        val torrentInfoDO = TorrentInfoDO()
+        val torrentInfoDO = InfoDO()
         torrentInfoDO.info = toTorrent.second
         torrentInfoDO.description = reqMap["description"] as String
         torrentInfoDO.infoHash = torrent.infoHash

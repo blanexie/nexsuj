@@ -64,9 +64,9 @@ CREATE TABLE `torrent` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 
--- nexusj.torrent_info definition
+-- nexusj.info definition
 
-CREATE TABLE `torrent_info` (
+CREATE TABLE `info` (
                                 `info_hash` varchar(100) NOT NULL,
                                 `info` blob NOT NULL,
                                 `description` text NOT NULL,
@@ -133,6 +133,5 @@ CREATE TABLE `user_torrent` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 
-INSERT INTO nexusj.`user`
-(email, pwd, sex, nick, upload, download, integral, create_time, update_time, auth_key, status, unlock_time)
-VALUES('', '', 0, '', 0, 0, 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, '', 0, '');
+INSERT INTO nexusj.user (id, email, pwd, sex, nick, upload, download, integral, create_time, update_time, auth_key, status, unlock_time)
+VALUES (1, 'abc@qq.com', '123456', 1, 'abc', 0, 0, 0, '2021-11-11 17:02:16', '2021-11-11 17:02:16', 'e934b04ba3234d639c0523f0cb15fe0d', 0, null);

@@ -206,8 +206,9 @@ interface PeerDO : Entity<PeerDO> {
     var userId: Int
     var createTime: LocalDateTime
     var lastReportTime: LocalDateTime
+
     //默认0 , 如果-1 就是表示这个peerId被禁用了
-    var status:Int
+    var status: Int
 
 }
 
@@ -260,24 +261,30 @@ interface TorrentDO : Entity<TorrentDO> {
 
     //0: 初始化状态 1: 正常可以使用的状态 -1： 非法的种子
     var status: Int
+
     //种子的上传这id
     var userId: Int
+
     //上传时间
     var uploadTime: LocalDateTime
 
     // 种子的类型， 9kg , 电影， 连续剧等
     var type: String
+
     //种子的标签
     var labels: List<String>
+
     //标题
     var title: String
 
     //上传比率， 默认1
-    var ratioUp:Float
+    var ratioUp: Float
+
     //下载比率， 默认1
-    var ratioDown:Float
+    var ratioDown: Float
+
     //上传下载 回复正常的时间点
-    var rationTime:LocalDateTime
+    var rationTime: LocalDateTime
 }
 
 
@@ -307,16 +314,16 @@ object Torrent : Table<TorrentDO>("torrent") {
 
 
     var ratioUp = float("ratio_up").bindTo { it.ratioUp }
-    var ratioDown =  float("ratio_down").bindTo { it.ratioDown }
+    var ratioDown = float("ratio_down").bindTo { it.ratioDown }
     var rationTime = datetime("ration_time").bindTo { it.rationTime }
 
 }
 
 /*********************************/
-val Database.torrentInfoDO get() = this.sequenceOf(TorrentInfo)
+val Database.torrentInfoDO get() = this.sequenceOf(Info)
 
-interface TorrentInfoDO : Entity<TorrentInfoDO> {
-    companion object : Entity.Factory<TorrentInfoDO>()
+interface InfoDO : Entity<InfoDO> {
+    companion object : Entity.Factory<InfoDO>()
 
     //info部分的sha1值. 默认urlencode编码的字符串
     var infoHash: String
@@ -327,9 +334,9 @@ interface TorrentInfoDO : Entity<TorrentInfoDO> {
 
 }
 
-object TorrentInfo : Table<TorrentInfoDO>("torrent_info") {
+object Info : Table<InfoDO>("info") {
     var infoHash = varchar("info_hash").bindTo { it.infoHash }
     var info = blob("info").bindTo { it.info }
-    var description = varchar("description").bindTo { it.description }
+    var description = text("description").bindTo { it.description }
 
 }
