@@ -20,7 +20,7 @@ interface UdBytesDO : Entity<UdBytesDO> {
 
     var authKey: String
 
-    //urlEncode编码的种子文件
+    //info部分sha1编码后再进行urlEncode之后的字符串
     var infoHash: String
 
     //上报的时间
@@ -35,24 +35,6 @@ interface UdBytesDO : Entity<UdBytesDO> {
     //-1: 这条上报记录作废
     var status: Int
 
-    /**
-     * 本条记录,  有效的计算的上传量
-     * 正数加, 负数减
-     */
-    var changeUpload: Long
-
-    /**
-     * 本条记录,  有效的计算的下载量
-     *   正数加, 负数减
-     */
-    var changeDownload: Long
-
-    /**
-     * 本条记录,  有效的计算的积分修改量
-     *   正数加, 负数减
-     */
-    var changeIntegral: Long
-
 }
 
 object UdBytes : Table<UdBytesDO>("upbytes") {
@@ -61,16 +43,10 @@ object UdBytes : Table<UdBytesDO>("upbytes") {
     var infoHash = varchar("info_hash").bindTo { it.infoHash }
     var uploadTime = datetime("upload_time").bindTo { it.uploadTime }
     var upload = long("upload").bindTo { it.upload }
-
     //下载量
     var download = long("download").bindTo { it.download }
-
     //剩余量
     var left = long("left").bindTo { it.left }
-
-    var changeUpload = long("change_upload").bindTo { it.changeUpload }
-    var changeDownload = long("change_download").bindTo { it.changeDownload }
-    var changeIntegral = long("change_integral").bindTo { it.changeIntegral }
 
     var status = int("status").bindTo { it.status }
 }
@@ -87,6 +63,11 @@ interface UserDO : Entity<UserDO> {
     var nick: String
     var sex: Int
 
+    /**
+     * 用户的角色id
+     */
+    var roleId:Int
+
     //上传量, 汇总的上传量
     var upload: Long
 
@@ -98,18 +79,16 @@ interface UserDO : Entity<UserDO> {
 
     var createTime: LocalDateTime
     var updateTime: LocalDateTime
+    //用户的默认key
     var authKey: String
 
     /**
-     * 0: 正常用户
-     * -1: 封禁用户
+     *  0: 正常用户
+     * -1: 永久封禁用户
+     * -2: 限时封禁用户
      */
     var status: Int
 
-    /**
-     * 解封时间, 只有封禁的状态这个字段才有意义
-     */
-    var unlockTime: LocalDateTime
 }
 
 object User : Table<UserDO>("user") {
@@ -119,20 +98,19 @@ object User : Table<UserDO>("user") {
     var sex = int("sex").bindTo { it.sex }
     var nick = varchar("nick").bindTo { it.nick }
 
-    //上传量
+    //上传量, 有效的上传量, 汇总的
     var upload = long("upload").bindTo { it.upload }
 
-    //下载量
+    //下载量, 有效的下载量, 汇总的
     var download = long("download").bindTo { it.download }
 
-    // 积分的大小
+    // 积分的大小,
     var integral = long("integral").bindTo { it.integral }
 
     var createTime = datetime("create_time").bindTo { it.createTime }
     var updateTime = datetime("update_time").bindTo { it.updateTime }
     var auth_key = varchar("auth_key").bindTo { it.authKey }
     var status = int("status").bindTo { it.status }
-    var unlockTime = datetime("unlock_time").bindTo { it.unlockTime }
 
 }
 
@@ -148,6 +126,8 @@ interface UserTorrentDO : Entity<UserTorrentDO> {
     var infoHash: String
     var createTime: LocalDateTime
     var authKey: String
+    //0 : 正常默认状态
+    //-1: 当前用户禁止下载这个文件
     var status: Int
 
 }
@@ -183,8 +163,9 @@ interface PeerDO : Entity<PeerDO> {
             peer.authKey = trackerReq.authKey
             peer.trackerid = trackerReq.trackerId
             peer.createTime = LocalDateTime.now()
+
             peer.userId = userId
-            peer.lastReportTime = LocalDateTime.now()
+            peer.reportTime = LocalDateTime.now()
             return peer
         }
     }
@@ -205,7 +186,7 @@ interface PeerDO : Entity<PeerDO> {
 
     var userId: Int
     var createTime: LocalDateTime
-    var lastReportTime: LocalDateTime
+    var reportTime: LocalDateTime
 
     //默认0 , 如果-1 就是表示这个peerId被禁用了
     var status: Int
@@ -229,7 +210,7 @@ object Peer : Table<PeerDO>("peer") {
     var createTime = datetime("create_time").bindTo { it.createTime }
 
     var userId = int("user_id").bindTo { it.userId }
-    var lastReportTime = datetime("last_report_time").bindTo { it.lastReportTime }
+    var reportTime = datetime("last_report_time").bindTo { it.reportTime }
     var authKey = varchar("auth_key").bindTo { it.authKey }
     var status = int("status").bindTo { it.status }
 }
