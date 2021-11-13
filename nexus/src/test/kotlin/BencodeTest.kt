@@ -4,6 +4,7 @@ import com.dampcake.bencode.Type
 import com.github.blanexie.nexusj.bencode.toTorrent
 import org.junit.Assert
 import org.junit.jupiter.api.Test
+import java.nio.charset.Charset
 
 
 class BencodeTest {
@@ -11,15 +12,11 @@ class BencodeTest {
 
     @Test
     fun beTorrent() {
-        val bencode = Bencode()
+        val bencode = Bencode(Charset.forName("utf8"),true)
         val classPathResource = ClassPathResource("aaa.torrent")
         val readBytes = classPathResource.readBytes()
         val torrentMap = bencode.decode(readBytes, Type.DICTIONARY)
         val linkedHashMap = torrentMap["info"] as LinkedHashMap<String, Any>
-        //linkedHashMap.remove("pieces")
-       // linkedHashMap.remove("piece length")
-        linkedHashMap.put("name","name")
-        linkedHashMap.put("name","name")
         val infoBytes = bencode.encode(linkedHashMap)
         println(String(infoBytes))
         val infoMap = bencode.decode(infoBytes, Type.DICTIONARY)

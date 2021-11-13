@@ -3,13 +3,14 @@ package com.github.blanexie.nexusj.bencode
 import cn.hutool.crypto.digest.DigestUtil
 import com.dampcake.bencode.Bencode
 import com.dampcake.bencode.Type
+import com.github.blanexie.dao.InfoDO
 import com.github.blanexie.dao.TorrentDO
+import com.github.blanexie.nexusj.support.gson
 import io.ktor.util.*
 import java.nio.ByteBuffer
-import java.nio.charset.Charset
 import java.time.LocalDateTime
 
-val bencode = Bencode(charset("utf8"),true)
+val bencode = Bencode(charset("utf8"), true)
 
 fun toBeMap(torrent: TorrentDO, info: ByteArray): ByteArray {
     val beMap = hashMapOf<String, Any?>()
@@ -32,49 +33,58 @@ fun toBeMap(torrent: TorrentDO, info: ByteArray): ByteArray {
 }
 
 
-fun toTorrent(beMapData: Map<String, Any>): Pair<TorrentDO, ByteArray> {
+fun toTorrent(reqMap: Map<String, Any>, userId: Int): Pair<TorrentDO, InfoDO> {
+    val beMapData = reqMap["torrent"] as Map<String, Any>
+    val torrent = TorrentDO()
     //开始处理文件 外部字段
-    val announce = beMapData["announce"].toStr()
-    val comment = beMapData["comment"].toStr()
-    val creationDate = beMapData["creation date"] as Long
-    val createdBy = beMapData["created by"].toStr()
-    val encoding = beMapData["encoding"].toStr()
-
+    torrent.announce = beMapData["announce"].toStr()
+    torrent.comment = beMapData["comment"].toStr()
+    torrent.creationDate = beMapData["creation date"] as Long
+    torrent.createdBy = beMapData["created by"].toStr()
+    torrent.encoding = beMapData["encoding"].toStr()
     //开始处理Info中字段
     val infoMap = beMapData["info"] as Map<String, Any>
     //计算infohash值
     val infoBytes = bencode.encode(infoMap)
-    val infoHash = urlEncode(DigestUtil.sha1(infoBytes))
-    val name = infoMap["name"].toStr()
-
-    val private = infoMap["private"] as Long
+    torrent.infoHash =  DigestUtil.sha1Hex(infoBytes)
+    torrent.name = infoMap["name"].toStr()
+    torrent.private = (infoMap["private"] as Long).toInt()
     //开始处理单文件和多文件
     val length = infoMap["length"] as Long?
-    val files = infoMap["files"] as List<Map<String, Any>>?
-    val size = if (length == null) {
+    torrent.files = infoMap["files"] as List<Map<String, Any>>?
+    torrent.size = if (length == null) {
         val pieces = infoMap["pieces"] as ByteArray
         val pieceLength = infoMap["piece length"] as Long
         (pieces.size / 20) * pieceLength
     } else {
         length
     }
-    val buildTorrent = buildTorrent(
-        announce, createdBy, comment, creationDate, encoding, infoHash, size,
-        name, private.toInt(), files
-    )
-    return buildTorrent to infoBytes
+    torrent.userId = userId
+    torrent.status = 0
+    torrent.uploadTime = LocalDateTime.now()
+    torrent.type = reqMap["type"] as String
+    torrent.labels = gson.fromJson<List<String>>(reqMap["labels"] as String, List::class.java)
+    torrent.title = reqMap["title"] as String
+
+    val infoDO = InfoDO()
+    infoDO.info = infoBytes
+    infoDO.description = reqMap["description"] as String
+    infoDO.infoHash = torrent.infoHash
+    return torrent to infoDO
 }
 
 private fun Any?.toStr(): String {
-    if(this is ByteBuffer){
-        return  String( this.array())
-    }else{
-       return this.toString()
+    if (this is ByteBuffer) {
+        return String(this.array())
+    } else if (this == null) {
+        return ""
+    } else {
+        return this.toString()
     }
 }
 
 @InternalAPI
- fun ByteBuffer.toStr(): String {
+fun ByteBuffer.toStr(): String {
     return Charsets.UTF_8.decode(this).toString()
 }
 

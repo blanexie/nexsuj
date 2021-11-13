@@ -1,7 +1,6 @@
 package com.github.blanexie.dao
 
 
-import com.github.blanexie.nexusj.controller.param.TrackerReq
 import com.github.blanexie.nexusj.support.json
 import org.ktorm.database.Database
 import org.ktorm.entity.Entity
@@ -43,8 +42,10 @@ object UdBytes : Table<UdBytesDO>("upbytes") {
     var infoHash = varchar("info_hash").bindTo { it.infoHash }
     var uploadTime = datetime("upload_time").bindTo { it.uploadTime }
     var upload = long("upload").bindTo { it.upload }
+
     //下载量
     var download = long("download").bindTo { it.download }
+
     //剩余量
     var left = long("left").bindTo { it.left }
 
@@ -66,7 +67,7 @@ interface UserDO : Entity<UserDO> {
     /**
      * 用户的角色id
      */
-    var roleId:Int
+    var roleId: Int
 
     //上传量, 汇总的上传量
     var upload: Long
@@ -79,6 +80,7 @@ interface UserDO : Entity<UserDO> {
 
     var createTime: LocalDateTime
     var updateTime: LocalDateTime
+
     //用户的默认key
     var authKey: String
 
@@ -97,6 +99,7 @@ object User : Table<UserDO>("user") {
     var pwd = varchar("pwd").bindTo { it.pwd }
     var sex = int("sex").bindTo { it.sex }
     var nick = varchar("nick").bindTo { it.nick }
+    var roleId = int("role_id").bindTo { it.roleId }
 
     //上传量, 有效的上传量, 汇总的
     var upload = long("upload").bindTo { it.upload }
@@ -126,6 +129,7 @@ interface UserTorrentDO : Entity<UserTorrentDO> {
     var infoHash: String
     var createTime: LocalDateTime
     var authKey: String
+
     //0 : 正常默认状态
     //-1: 当前用户禁止下载这个文件
     var status: Int
@@ -146,29 +150,7 @@ object UserTorrent : Table<UserTorrentDO>("user_torrent") {
 val Database.peerDO get() = this.sequenceOf(Peer)
 
 interface PeerDO : Entity<PeerDO> {
-    companion object : Entity.Factory<PeerDO>() {
-        fun build(trackerReq: TrackerReq, userId: Int): PeerDO {
-            val peer = PeerDO()
-            peer.infoHash = trackerReq.infoHash
-            peer.peerId = trackerReq.peerId
-            peer.port = trackerReq.port
-            peer.uploaded = trackerReq.uploaded
-            peer.downloaded = trackerReq.downloaded
-            peer.left = trackerReq.left
-            peer.compact = trackerReq.compact
-            peer.event = trackerReq.event
-            peer.ip = trackerReq.ip
-            peer.numwant = trackerReq.numwant
-
-            peer.authKey = trackerReq.authKey
-            peer.trackerid = trackerReq.trackerId
-            peer.createTime = LocalDateTime.now()
-
-            peer.userId = userId
-            peer.reportTime = LocalDateTime.now()
-            return peer
-        }
-    }
+    companion object : Entity.Factory<PeerDO>()
 
     var id: Int
     var infoHash: String
@@ -180,6 +162,7 @@ interface PeerDO : Entity<PeerDO> {
     var compact: Int
     var event: String
     var ip: String
+    var ipv6: String?
     var numwant: Int
     var trackerid: String?
     var authKey: String
@@ -205,12 +188,13 @@ object Peer : Table<PeerDO>("peer") {
     var compact = int("compact").bindTo { it.compact }
     var event = varchar("event").bindTo { it.event }
     var ip = varchar("ip").bindTo { it.ip }
+    var ipv6 = varchar("ipv6").bindTo { it.ipv6 }
     var numwant = int("numwant").bindTo { it.numwant }
     var trackerid = varchar("trackerid").bindTo { it.trackerid }
     var createTime = datetime("create_time").bindTo { it.createTime }
 
     var userId = int("user_id").bindTo { it.userId }
-    var reportTime = datetime("last_report_time").bindTo { it.reportTime }
+    var reportTime = datetime("report_time").bindTo { it.reportTime }
     var authKey = varchar("auth_key").bindTo { it.authKey }
     var status = int("status").bindTo { it.status }
 }

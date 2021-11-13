@@ -74,14 +74,14 @@ fun Route.notAuth() {
      * 下载 文件
      */
     get("/download/torrent") {
-       // val principal = call.authentication.principal<UserPrincipal>()!!
-        val u =UserDO()
-        u.email="abc@qq.com"
-        u.id=1
-        u.authKey="9c69a0b7707840488e793019e9e8e42b"
-        u.nick="abc"
-        u.sex=1
-        u.status= 0
+        // val principal = call.authentication.principal<UserPrincipal>()!!
+        val u = UserDO()
+        u.email = "abc@qq.com"
+        u.id = 1
+        u.authKey = "9c69a0b7707840488e793019e9e8e42b"
+        u.nick = "abc"
+        u.sex = 1
+        u.status = 0
         val user = u
 
         val id = call.request.queryParameters["id"]!!.toInt()
@@ -95,12 +95,7 @@ fun Route.notAuth() {
         var userTorrentDO =
             database.userTorrentDO.firstOrNull { (it.infoHash eq torrentDO.infoHash) and (it.userId eq user.id) }
         if (userTorrentDO == null) {
-            userTorrentDO = UserTorrentDO()
-            userTorrentDO.infoHash = torrentDO.infoHash
-            userTorrentDO.userId = user.id
-            userTorrentDO.createTime = LocalDateTime.now()
-            userTorrentDO.authKey = IdUtil.fastSimpleUUID()
-            userTorrentDO.status = 0
+            userTorrentDO = buildUserTorrent(torrentDO, user.id)
             database.userTorrentDO.add(userTorrentDO)
         }
 
@@ -108,8 +103,8 @@ fun Route.notAuth() {
         val announceUrl = setting["pt.announce.url"]
         torrentDO.announce = "${announceUrl}?auth_key=${userTorrentDO.authKey}"
 
-        val info = database.from(TorrentInfo).select(TorrentInfo.infoHash, TorrentInfo.info)
-            .where { TorrentInfo.infoHash eq torrentDO.infoHash }.limit(1)
+        val info = database.from(Info).select(Info.infoHash, Info.info)
+            .where { Info.infoHash eq torrentDO.infoHash }.limit(1)
             .map { it.getBytes(2) }
             .last()
 
@@ -121,6 +116,19 @@ fun Route.notAuth() {
     }
 }
 
+private fun buildUserTorrent(
+    torrentDO: TorrentDO,
+    userId: Int
+): UserTorrentDO {
+    val userTorrentDO = UserTorrentDO()
+    userTorrentDO.infoHash = torrentDO.infoHash
+    userTorrentDO.userId = userId
+    userTorrentDO.createTime = LocalDateTime.now()
+    userTorrentDO.authKey = IdUtil.fastSimpleUUID()
+    userTorrentDO.status = 0
+    return userTorrentDO
+}
+
 
 fun Route.auth() {
 
@@ -130,23 +138,9 @@ fun Route.auth() {
     post("/upload/torrent") {
         val principal = call.authentication.principal<UserPrincipal>()!!
         val user = principal.user!!
-        val multipartData = call.receiveMultipart()
-        val reqMap = receiveFrom(multipartData)
-
-        val toTorrent = toTorrent(reqMap["torrent"] as Map<String,Any>)
-        val torrent = toTorrent.first
-        torrent.userId = user.id
-        torrent.status = 0
-        torrent.uploadTime = LocalDateTime.now()
-        torrent.type = reqMap["type"] as String
-        torrent.labels = gson.fromJson<List<String>>(reqMap["labels"] as String, List::class.java)
-        torrent.title = reqMap["title"] as String
-
-        val torrentInfoDO = InfoDO()
-        torrentInfoDO.info = toTorrent.second
-        torrentInfoDO.description = reqMap["description"] as String
-        torrentInfoDO.infoHash = torrent.infoHash
-
+        val reqMap = receiveFrom(call.receiveMultipart())
+        val torrentFile = toTorrent(reqMap, user.id)
+        val torrent = torrentFile.first
         //查询是否已经存在
         val existTorrentDO = database.torrentDO.filter { it.infoHash eq torrent.infoHash }
             .firstOrNull()
@@ -157,7 +151,7 @@ fun Route.auth() {
 
         database.useTransaction {
             try {
-                database.torrentInfoDO.add(torrentInfoDO)
+                database.torrentInfoDO.add(torrentFile.second)
                 database.torrentDO.add(torrent)
                 it.commit()
             } catch (e: Exception) {
@@ -167,18 +161,15 @@ fun Route.auth() {
         }
         call.respond(Result())
     }
-
-
-
-
 }
 
-suspend fun receiveFrom(multipartData:MultiPartData):Map<String, Any>{
+suspend fun receiveFrom(multipartData: MultiPartData): Map<String, Any> {
     val reqMap = hashMapOf<String, Any>()
     multipartData.forEachPart { partData ->
         when (partData) {
             is PartData.FileItem -> {
-                reqMap["torrent"]= BencodeInputStream(partData.streamProvider(), charset("utf8"),true).readDictionary()
+                reqMap["torrent"] =
+                    BencodeInputStream(partData.streamProvider(), charset("utf8"), true).readDictionary()
             }
             is PartData.FormItem -> {
                 reqMap[partData.name!!] = partData.value
@@ -188,5 +179,5 @@ suspend fun receiveFrom(multipartData:MultiPartData):Map<String, Any>{
             }
         }
     }
-    return  reqMap
+    return reqMap
 }
