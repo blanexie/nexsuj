@@ -161,7 +161,7 @@ interface PeerDO : Entity<PeerDO> {
     var left: Long
     var compact: Int
     var event: String
-    var ip: String
+    var ip: String?
     var ipv6: String?
     var numwant: Int
     var trackerid: String?
