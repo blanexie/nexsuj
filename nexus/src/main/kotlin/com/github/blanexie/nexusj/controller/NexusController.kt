@@ -72,22 +72,16 @@ fun Route.notAuth() {
         call.respond(Result(body = mapOf("token" to token)))
         return@post
     }
+}
 
 
+fun Route.auth() {
     /**
      * 下载 文件
      */
     get("/download/torrent") {
-        // val principal = call.authentication.principal<UserPrincipal>()!!
-        val u = UserDO()
-        u.email = "abd@qq.com"
-        u.id = 2
-        u.authKey = "9c69a0b7707840488e793019e9e8e421"
-        u.nick = "abd"
-        u.sex = 1
-        u.status = 0
-        val user = u
-
+        val principal = call.authentication.principal<UserPrincipal>()!!
+        val user = principal.user
         val id = call.request.queryParameters["id"]!!.toInt()
         val torrentDO = database.torrentDO.first { it.id eq id }
 
@@ -114,30 +108,12 @@ fun Route.notAuth() {
 
         val fileName = "attachment; filename='${URLUtil.encode(torrentDO.name)}.torrent' ; charset=utf-8"
         //返回
-        call.response.header("content-disposition",fileName)
+        call.response.header("content-disposition", fileName)
         call.respondBytes(
             bytes = toBeMap(torrentDO, info!!),
             contentType = ContentType.parse("application/x-bittorrent")
         )
     }
-}
-
-private fun buildUserTorrent(
-    torrentDO: TorrentDO,
-    userId: Int
-): UserTorrentDO {
-    val userTorrentDO = UserTorrentDO()
-    userTorrentDO.infoHash = torrentDO.infoHash
-    userTorrentDO.userId = userId
-    userTorrentDO.createTime = LocalDateTime.now()
-    userTorrentDO.authKey = IdUtil.fastSimpleUUID()
-    userTorrentDO.status = 0
-    return userTorrentDO
-}
-
-
-fun Route.auth() {
-
     /**
      * 上传文件
      */
@@ -186,4 +162,18 @@ suspend fun receiveFrom(multipartData: MultiPartData): Map<String, Any> {
         }
     }
     return reqMap
+}
+
+
+private fun buildUserTorrent(
+    torrentDO: TorrentDO,
+    userId: Int
+): UserTorrentDO {
+    val userTorrentDO = UserTorrentDO()
+    userTorrentDO.infoHash = torrentDO.infoHash
+    userTorrentDO.userId = userId
+    userTorrentDO.createTime = LocalDateTime.now()
+    userTorrentDO.authKey = IdUtil.fastSimpleUUID()
+    userTorrentDO.status = 0
+    return userTorrentDO
 }
