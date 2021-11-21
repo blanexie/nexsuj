@@ -1,7 +1,5 @@
 package com.github.blanexie.nexusj.controller
 
-import cn.hutool.core.net.URLDecoder
-import cn.hutool.core.net.URLEncoder
 import cn.hutool.core.util.IdUtil
 import cn.hutool.core.util.URLUtil
 import com.dampcake.bencode.BencodeInputStream
@@ -13,7 +11,6 @@ import com.github.blanexie.nexusj.controller.param.UserQuery
 import com.github.blanexie.nexusj.support.*
 import io.ktor.application.*
 import io.ktor.auth.*
-import io.ktor.client.utils.*
 import io.ktor.http.*
 import io.ktor.http.content.*
 import io.ktor.request.*
@@ -76,6 +73,16 @@ fun Route.notAuth() {
 
 
 fun Route.auth() {
+
+    get("/user/info"){
+        val principal = call.authentication.principal<UserPrincipal>()!!
+        val user = principal.user
+
+
+
+    }
+
+
     /**
      * 下载 文件
      */

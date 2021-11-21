@@ -1,6 +1,9 @@
 package com.github.blanexie.dao
 
 
+import com.github.blanexie.dao.Torrent.bindTo
+import com.github.blanexie.dao.User.bindTo
+import com.github.blanexie.dao.User.primaryKey
 import com.github.blanexie.nexusj.support.json
 import org.ktorm.database.Database
 import org.ktorm.entity.Entity
@@ -41,6 +44,22 @@ object UdBytes : Table<UdBytesDO>("upbytes") {
     var download = long("download").bindTo { it.download }     //下载量
     var left = long("left").bindTo { it.left }    //剩余量
     var status = int("status").bindTo { it.status }
+}
+/**************** role ********************************************/
+val Database.roleDO get() = this.sequenceOf(Role)
+
+interface RoleDO : Entity<RoleDO> {
+    companion object : Entity.Factory<UserDO>()
+    var id: Int
+    var name: String
+    var attribute: List<Map<String, Any>>
+
+}
+
+object Role : Table<RoleDO>("role") {
+    var id = int("id").primaryKey().bindTo { it.id }
+    var name = varchar("name").bindTo { it.name }
+    var properties =json<List<Map<String, Any>>>("properties").bindTo { it.attribute }
 }
 
 /*****************************************************/

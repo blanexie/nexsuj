@@ -12,6 +12,7 @@ import io.ktor.auth.*
 import io.ktor.auth.jwt.*
 import io.ktor.features.*
 import io.ktor.gson.*
+import io.ktor.http.*
 import io.ktor.routing.*
 import java.text.DateFormat
 import java.time.LocalDateTime
@@ -46,6 +47,19 @@ fun Application.nexus(testing: Boolean = true) {
             registerTypeAdapter(LocalDateTime::class.java, JsonSerializerImpl())
             setPrettyPrinting()
         }
+    }
+    install(CORS) {
+        method(HttpMethod.Options)
+        method(HttpMethod.Get)
+        method(HttpMethod.Post)
+        method(HttpMethod.Put)
+        method(HttpMethod.Delete)
+        method(HttpMethod.Patch)
+        header(HttpHeaders.Authorization)
+        header( "X-Token")
+        allowCredentials = true
+        allowNonSimpleContentTypes = true
+        anyHost()
     }
     install(Authentication) {
         jwt {
