@@ -1,5 +1,6 @@
 package com.github.blanexie.nexusj.support.event
 
+import com.github.blanexie.nexusj.service.UdBytesListener
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
@@ -27,14 +28,14 @@ class EventBusImpl : EventBus {
 
     private val coroutineScope: CoroutineScope = GlobalScope
 
-    private val listeners = hashMapOf<String, Listener>()
+    private val listeners = mutableMapOf(uploadBytes to UdBytesListener())
 
     override fun addListener(listener: Listener) {
-        listeners[listener.topic()] = listener
+        //listeners[listener.topic()] = listener
     }
 
     override fun removeListener(listener: Listener) {
-        listeners.remove(listener.topic())
+       // listeners.remove(listener.topic())
     }
 
     override fun publish(event: Event<*>) {

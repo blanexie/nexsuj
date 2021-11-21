@@ -82,6 +82,7 @@ CREATE TABLE `info` (
 CREATE TABLE `upbytes` (
                            `id` int NOT NULL AUTO_INCREMENT,
                            `user_id` int NOT NULL,
+                           `auth_key` varchar(256) NOT NULL,
                            `info_hash` varchar(256) NOT NULL,
                            `upload_time` datetime NOT NULL,
                            `upload` bigint NOT NULL,

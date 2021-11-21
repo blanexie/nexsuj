@@ -16,15 +16,10 @@ interface UdBytesDO : Entity<UdBytesDO> {
     companion object : Entity.Factory<UdBytesDO>()
 
     var id: Int
-
     var authKey: String
-
-    //info部分sha1编码后再进行urlEncode之后的字符串
-    var infoHash: String
-
-    //上报的时间
-    var uploadTime: LocalDateTime
-
+    var infoHash: String   //info部分sha1编码后再进行urlEncode之后的字符串
+    var uploadTime: LocalDateTime   //上报的时间
+    var userId: Int
     var upload: Long
     var download: Long
     var left: Long
@@ -42,13 +37,9 @@ object UdBytes : Table<UdBytesDO>("upbytes") {
     var infoHash = varchar("info_hash").bindTo { it.infoHash }
     var uploadTime = datetime("upload_time").bindTo { it.uploadTime }
     var upload = long("upload").bindTo { it.upload }
-
-    //下载量
-    var download = long("download").bindTo { it.download }
-
-    //剩余量
-    var left = long("left").bindTo { it.left }
-
+    var userId = int("user_id").bindTo { it.userId }
+    var download = long("download").bindTo { it.download }     //下载量
+    var left = long("left").bindTo { it.left }    //剩余量
     var status = int("status").bindTo { it.status }
 }
 

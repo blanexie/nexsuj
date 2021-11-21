@@ -31,7 +31,8 @@ class UdBytesListener : Listener {
         udBytesDO.status = 0
         udBytesDO.authKey = peerDO.authKey
         udBytesDO.uploadTime = peerDO.reportTime
-
+        udBytesDO.userId= peerDO.userId
+        udBytesDO.status=0
         database.udBytesDO.add(udBytesDO)
     }
 
