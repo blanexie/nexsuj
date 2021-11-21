@@ -1,7 +1,7 @@
 
 
 -- docker run -p 8306:3306 --name  mysql -v /home/mysql:/var/lib/mysql -e MYSQL_ROOT_PASSWORD=123456 -d mysql:8.0.27
-
+--  docker run -p 8306:3306 --name  mysql -v C://home/mysql:/var/lib/mysql -e MYSQL_ROOT_PASSWORD=123456 -d mysql:8.0.27
 CREATE DATABASE `nexusj` /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci */ /*!80016 DEFAULT ENCRYPTION='N' */;
 
 
@@ -17,7 +17,8 @@ CREATE TABLE `peer` (
                         `left` bigint NOT NULL,
                         `compact` int NOT NULL DEFAULT '1',
                         `event` varchar(100) NOT NULL,
-                        `ip` varchar(1024) NOT NULL,
+                        `ip` varchar(1024) DEFAULT NULL,
+                        `ipv6` varchar(1024) DEFAULT NULL,
                         `numwant` int DEFAULT NULL,
                         `trackerid` varchar(100) DEFAULT NULL,
                         `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -29,9 +30,10 @@ CREATE TABLE `peer` (
                         KEY `peer_auth_key_IDX` (`auth_key`),
                         KEY `peer_info_hash_IDX` (`info_hash`),
                         KEY `peer_last_report_time_IDX` (`report_time`),
-                        KEY `peer_peer_id_IDX` (`peer_id`),
-                        KEY `peer_user_id_IDX` (`user_id`)
+                        KEY `peer_peer_id_IDX` (`peer_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+create unique index peer_user_id_info_hash_uindex
+    on peer (user_id, info_hash);
 
 
 -- nexusj.torrent definition

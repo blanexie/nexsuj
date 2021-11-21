@@ -1,6 +1,9 @@
 package com.github.blanexie.nexusj.controller
 
+import cn.hutool.core.net.URLDecoder
+import cn.hutool.core.net.URLEncoder
 import cn.hutool.core.util.IdUtil
+import cn.hutool.core.util.URLUtil
 import com.dampcake.bencode.BencodeInputStream
 import com.github.blanexie.dao.*
 import com.github.blanexie.nexusj.bencode.toBeMap
@@ -10,6 +13,7 @@ import com.github.blanexie.nexusj.controller.param.UserQuery
 import com.github.blanexie.nexusj.support.*
 import io.ktor.application.*
 import io.ktor.auth.*
+import io.ktor.client.utils.*
 import io.ktor.http.*
 import io.ktor.http.content.*
 import io.ktor.request.*
@@ -76,10 +80,10 @@ fun Route.notAuth() {
     get("/download/torrent") {
         // val principal = call.authentication.principal<UserPrincipal>()!!
         val u = UserDO()
-        u.email = "abc@qq.com"
-        u.id = 1
-        u.authKey = "9c69a0b7707840488e793019e9e8e42b"
-        u.nick = "abc"
+        u.email = "abd@qq.com"
+        u.id = 2
+        u.authKey = "9c69a0b7707840488e793019e9e8e421"
+        u.nick = "abd"
         u.sex = 1
         u.status = 0
         val user = u
@@ -108,7 +112,9 @@ fun Route.notAuth() {
             .map { it.getBytes(2) }
             .last()
 
+        val fileName = "attachment; filename='${URLUtil.encode(torrentDO.name)}.torrent' ; charset=utf-8"
         //返回
+        call.response.header("content-disposition",fileName)
         call.respondBytes(
             bytes = toBeMap(torrentDO, info!!),
             contentType = ContentType.parse("application/x-bittorrent")
@@ -151,7 +157,7 @@ fun Route.auth() {
 
         database.useTransaction {
             try {
-                database.torrentInfoDO.add(torrentFile.second)
+                database.infoDO.add(torrentFile.second)
                 database.torrentDO.add(torrent)
                 it.commit()
             } catch (e: Exception) {

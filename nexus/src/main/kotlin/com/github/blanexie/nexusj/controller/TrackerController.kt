@@ -1,6 +1,7 @@
 package com.github.blanexie.nexusj.controller
 
 import cn.hutool.core.net.URLDecoder
+import cn.hutool.core.util.ByteUtil
 import cn.hutool.core.util.HexUtil
 import com.github.blanexie.dao.PeerDO
 import com.github.blanexie.dao.peerDO
@@ -17,6 +18,8 @@ import io.ktor.http.*
 import io.ktor.request.*
 import io.ktor.response.*
 import io.ktor.routing.*
+import io.netty.buffer.ByteBuf
+import io.netty.buffer.Unpooled
 import org.ktorm.dsl.and
 import org.ktorm.dsl.eq
 import org.ktorm.dsl.inList
@@ -79,24 +82,8 @@ fun Route.tracker() {
             }
         }
 
+
         //2.2 返回数据
-        val peersStr = peerDOs
-            .filter { it.peerId != peer.peerId }
-            .filter { it.ip != null }
-            .map { getCompactPeer(it.ip!!, it.port) }
-            .reduce { acc, bytes -> acc.plus(bytes) }
-
-        val peers6Str = peerDOs
-            .filter { it.peerId != peer.peerId }
-            .filter { it.ipv6 != null }
-            .map {
-                val type: Type = object : TypeToken<List<String>>() {}.type
-                val list: List<String> = gson.fromJson(it.ipv6, type)
-                list.map { str-> getCompactPeer6(str , it.port) }
-                    .reduce { acc, bytes -> acc.plus(bytes) }
-            }
-            .reduce { acc, bytes -> acc.plus(bytes) }
-
         val count = peerDOs.filter { it.event == "completed" }.count()
         val resp = hashMapOf<String, Any>()
         resp["interval"] = 3600
@@ -104,11 +91,32 @@ fun Route.tracker() {
         resp["incomplete"] = peerDOs.size - count
         resp["complete"] = count
 
-        if (peersStr != null) {
-            resp["peers"] = ByteBuffer.wrap(peersStr)
+
+        val bytebuf = Unpooled.buffer()
+        peerDOs
+            .filter { it.peerId != peer.peerId }
+            .filter { it.ip != null }.filterNotNull()
+            .map { getCompactPeer(it.ip!!, it.port) }
+            .forEach { bytes -> bytebuf.writeBytes(bytes) }
+
+        val nioBuffer = bytebuf.nioBuffer()
+        if (bytebuf.readableBytes() > 0) {
+            resp["peers"] = nioBuffer
         }
-        if (peers6Str != null) {
-            resp["peers6"] =  ByteBuffer.wrap(peers6Str)
+
+        val bytebuf6 = Unpooled.buffer()
+        peerDOs
+            .filter { it.peerId != peer.peerId }
+            .filter { it.ipv6 != null }.filterNotNull()
+            .map {
+                val type: Type = object : TypeToken<List<String>>() {}.type
+                val list: List<String> = gson.fromJson(it.ipv6, type)
+                list.map { str -> getCompactPeer6(str, it.port) }
+                    .reduce { acc, bytes -> acc.plus(bytes) }
+            }
+            .forEach { it -> bytebuf6.writeBytes(it) }
+        if (bytebuf6.readableBytes() > 0) {
+            resp["peers6"] = bytebuf6.nioBuffer()
         }
 
         //3. 上报用户下载和上传的数据
@@ -179,6 +187,7 @@ fun blockBrowser(request: ApplicationRequest): String? {
 val LOCALHOST = "127.0.0.1"
 val LOCALHOSTIPV6 = "0:0:0:0:0:0:0:1"
 val LOCALHOSTStr = "localhost"
+val DOCKERLOCLHOST = "host.docker.internal"
 
 /**
  * 注意对ipv6地址的兼容和处理
@@ -203,11 +212,16 @@ fun getIpAddress(request: ApplicationRequest): String? {
     }
     if (ipAddress == null || ipAddress.isEmpty() || UNKNOWN != ipAddress) {
         ipAddress = request.origin.remoteHost
-        if (LOCALHOST == ipAddress || LOCALHOSTStr == ipAddress || LOCALHOSTIPV6 == ipAddress) {
+        if (LOCALHOST == ipAddress
+            || LOCALHOSTStr == ipAddress
+            || LOCALHOSTIPV6 == ipAddress
+            || DOCKERLOCLHOST == ipAddress
+        ) {
             var inet: InetAddress? = InetAddress.getLocalHost()
             ipAddress = inet!!.hostAddress
         }
     }
+
     // 对于通过多个代理的情况，第一个IP为客户端真实IP,多个IP按照','分割
     // "***.***.***.***".length()
     if (ipAddress != null && ipAddress.length > 15) {

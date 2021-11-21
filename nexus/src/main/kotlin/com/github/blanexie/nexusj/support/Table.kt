@@ -285,7 +285,7 @@ object Torrent : Table<TorrentDO>("torrent") {
 }
 
 /*********************************/
-val Database.torrentInfoDO get() = this.sequenceOf(Info)
+val Database.infoDO get() = this.sequenceOf(Info)
 
 interface InfoDO : Entity<InfoDO> {
     companion object : Entity.Factory<InfoDO>()
