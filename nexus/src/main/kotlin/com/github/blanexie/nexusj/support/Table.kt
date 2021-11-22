@@ -52,14 +52,14 @@ interface RoleDO : Entity<RoleDO> {
     companion object : Entity.Factory<UserDO>()
     var id: Int
     var name: String
-    var attribute: List<Map<String, Any>>
+    var attribute: Map<String, Any>
 
 }
 
 object Role : Table<RoleDO>("role") {
     var id = int("id").primaryKey().bindTo { it.id }
     var name = varchar("name").bindTo { it.name }
-    var properties =json<List<Map<String, Any>>>("properties").bindTo { it.attribute }
+    var properties =json<Map<String, Any>>("properties").bindTo { it.attribute }
 }
 
 /*****************************************************/
@@ -72,6 +72,7 @@ interface UserDO : Entity<UserDO> {
     var email: String
     var pwd: String
     var nick: String
+    var avatar: String?
     var sex: Int
 
     /**
@@ -109,6 +110,7 @@ object User : Table<UserDO>("user") {
     var pwd = varchar("pwd").bindTo { it.pwd }
     var sex = int("sex").bindTo { it.sex }
     var nick = varchar("nick").bindTo { it.nick }
+    var avatar = varchar("avatar").bindTo { it.avatar }
     var roleId = int("role_id").bindTo { it.roleId }
 
     //上传量, 有效的上传量, 汇总的

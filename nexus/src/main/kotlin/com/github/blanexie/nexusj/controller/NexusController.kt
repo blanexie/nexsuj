@@ -41,11 +41,12 @@ fun Route.notAuth() {
         userDO.email = signUpParam.email!!
         userDO.pwd = signUpParam.pwd!!
         userDO.nick = signUpParam.nick!!
+        userDO.avatar = signUpParam.avatar
         userDO.sex = signUpParam.sex!!
         userDO.status = 0
         userDO.updateTime = LocalDateTime.now()
         userDO.authKey = IdUtil.fastSimpleUUID()
-        database.userDO.add(userDO)
+        database().userDO.add(userDO)
         userDO.pwd = ""
         call.respond(Result(body = mapOf("user" to userDO)))
     }
@@ -55,15 +56,14 @@ fun Route.notAuth() {
      */
     post("/login") {
         val loginParam = call.receive<UserQuery>()
-        val userDO = database.userDO
-            .first { (it.pwd eq loginParam.pwd!!) and (it.email eq loginParam.email!!) }
+        val userDO = database().userDO.firstOrNull { (it.pwd eq loginParam.pwd!!) and (it.email eq loginParam.email!!) }
         if (userDO == null) {
             call.respond(Result(403, "登录失败"))
             return@post
         }
 
         val userStr =
-            "{'id':${userDO.id} ,'authKey':'${userDO.authKey}','createTime':'${userDO.createTime.format(dateFormat)}', 'nick':'${userDO.nick}', 'email':'${userDO.email}','sex':${userDO.sex}  }"
+            "{'id':${userDO.id} ,'authKey':'${userDO.authKey}','avatar':'${userDO.avatar}' 'roleId':${userDO.roleId},'createTime':'${userDO.createTime.format(dateFormat)}', 'nick':'${userDO.nick}', 'email':'${userDO.email}','sex':${userDO.sex}  }"
 
         val token = call.application.jwtSign(userStr)
         call.respond(Result(body = mapOf("token" to token)))
@@ -74,14 +74,13 @@ fun Route.notAuth() {
 
 fun Route.auth() {
 
-    get("/user/info"){
+    get("/user/info") {
         val principal = call.authentication.principal<UserPrincipal>()!!
         val user = principal.user
-
-
-
+        val roleDO:RoleDO = database().roleDO.first { it.id eq user.roleId }
+        call.respond(Result(body = mapOf("user" to user, "role" to roleDO)))
+        return@get
     }
-
 
     /**
      * 下载 文件
@@ -90,7 +89,7 @@ fun Route.auth() {
         val principal = call.authentication.principal<UserPrincipal>()!!
         val user = principal.user
         val id = call.request.queryParameters["id"]!!.toInt()
-        val torrentDO = database.torrentDO.first { it.id eq id }
+        val torrentDO = database().torrentDO.first { it.id eq id }
 
         if (torrentDO == null) {
             call.respond(Result(code = 404, message = "下载的种子不存在"))
@@ -98,17 +97,17 @@ fun Route.auth() {
         }
         //增加一条userTorrent记录
         var userTorrentDO =
-            database.userTorrentDO.firstOrNull { (it.infoHash eq torrentDO.infoHash) and (it.userId eq user.id) }
+            database().userTorrentDO.firstOrNull { (it.infoHash eq torrentDO.infoHash) and (it.userId eq user.id) }
         if (userTorrentDO == null) {
             userTorrentDO = buildUserTorrent(torrentDO, user.id)
-            database.userTorrentDO.add(userTorrentDO)
+            database().userTorrentDO.add(userTorrentDO)
         }
 
         //构建下载者的announce
         val announceUrl = setting["pt.announce.url"]
         torrentDO.announce = "${announceUrl}?auth_key=${userTorrentDO.authKey}"
 
-        val info = database.from(Info).select(Info.infoHash, Info.info)
+        val info = database().from(Info).select(Info.infoHash, Info.info)
             .where { Info.infoHash eq torrentDO.infoHash }.limit(1)
             .map { it.getBytes(2) }
             .last()
@@ -131,17 +130,17 @@ fun Route.auth() {
         val torrentFile = toTorrent(reqMap, user.id)
         val torrent = torrentFile.first
         //查询是否已经存在
-        val existTorrentDO = database.torrentDO.filter { it.infoHash eq torrent.infoHash }
+        val existTorrentDO = database().torrentDO.filter { it.infoHash eq torrent.infoHash }
             .firstOrNull()
         if (existTorrentDO != null) {
             call.respond(Result(40000, "不要上传重复的文件"))
             return@post
         }
 
-        database.useTransaction {
+        database().useTransaction {
             try {
-                database.infoDO.add(torrentFile.second)
-                database.torrentDO.add(torrent)
+                database().infoDO.add(torrentFile.second)
+                database().torrentDO.add(torrent)
                 it.commit()
             } catch (e: Exception) {
                 it.rollback()

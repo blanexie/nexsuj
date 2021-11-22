@@ -57,20 +57,20 @@ fun Route.tracker() {
         }
         //1.2 完善peer中的userId信息
         val userTorrentDO =
-            database.userTorrentDO.findLast { (it.authKey eq peer.authKey) and (it.infoHash eq peer.infoHash) }
+            database().userTorrentDO.findLast { (it.authKey eq peer.authKey) and (it.infoHash eq peer.infoHash) }
         if (userTorrentDO == null) {
             call.respond(bencode.encode(hashMapOf("failReason" to "Operation without permission")))
             return@get
         }
         peer.userId = userTorrentDO.userId
         // 2. 找出符合的peer返回
-        val peerDOs = database.peerDO.filter {
+        val peerDOs = database().peerDO.filter {
             (it.infoHash eq peer.infoHash) and (it.event inList peerEvent)
         }.toList()
         // 2.1 找出本机peer
         var peerDO: PeerDO? = peerDOs.findLast { it.userId == peer.userId }
         if (peerDO == null) {
-            database.peerDO.add(peer)
+            database().peerDO.add(peer)
         } else {
             // 2.2 查看当前用户是否有两个客户端下载
             if (peer.peerId != peerDO.peerId) {
@@ -78,7 +78,7 @@ fun Route.tracker() {
                 return@get
             } else {
                 peer.id = peerDO.id
-                database.peerDO.update(peer)
+                database().peerDO.update(peer)
             }
         }
 

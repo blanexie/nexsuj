@@ -9,6 +9,7 @@ data class UserQuery(
     var email: String? = null,
     var pwd: String? = null,
     var nick: String? = null,
+    var avatar: String? = null,
     var sex: Int? = null,
     var code: String? = null,      //邮箱收到的验证码
     var createTime: Long? = null,
