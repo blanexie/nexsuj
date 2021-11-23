@@ -13,13 +13,13 @@ import java.sql.Types
 import kotlin.reflect.KClass
 
 
-private var database = null
+private var database: Database? = null
 
 fun database(): Database {
-    return if (database != null) database!!
-    else {
-        Database.connect(HikariDataSource(hikariConfig()), dialect = MySqlDialect())
+    if (database == null) {
+        database = Database.connect(HikariDataSource(hikariConfig()), dialect = MySqlDialect())
     }
+    return database!!
 }
 
 fun hikariConfig(): HikariConfig {

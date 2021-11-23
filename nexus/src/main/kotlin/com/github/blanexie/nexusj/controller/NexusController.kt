@@ -63,7 +63,7 @@ fun Route.notAuth() {
         }
 
         val userStr =
-            "{'id':${userDO.id} ,'authKey':'${userDO.authKey}','avatar':'${userDO.avatar}' 'roleId':${userDO.roleId},'createTime':'${userDO.createTime.format(dateFormat)}', 'nick':'${userDO.nick}', 'email':'${userDO.email}','sex':${userDO.sex}  }"
+            "{'id':${userDO.id} ,'authKey':'${userDO.authKey}','avatar':'${userDO.avatar}', 'roleId':${userDO.roleId},'createTime':'${userDO.createTime.format(dateFormat)}', 'nick':'${userDO.nick}', 'email':'${userDO.email}','sex':${userDO.sex}  }"
 
         val token = call.application.jwtSign(userStr)
         call.respond(Result(body = mapOf("token" to token)))

@@ -49,13 +49,13 @@ const actions = {
     return new Promise((resolve, reject) => {
       getInfo(state.token).then(response => {
         const { body } = response
-
+        console.log(response, body)
         if (!body) {
           return reject('Verification failed, please Login again.')
         }
 
         const { nick, avatar } = body.user
-
+        console.log(nick, avatar)
         commit('SET_NAME', nick)
         commit('SET_AVATAR', avatar)
         resolve(body)
