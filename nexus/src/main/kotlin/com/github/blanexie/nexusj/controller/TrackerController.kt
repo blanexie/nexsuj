@@ -4,6 +4,7 @@ import cn.hutool.core.net.URLDecoder
 import cn.hutool.core.util.ByteUtil
 import cn.hutool.core.util.HexUtil
 import com.github.blanexie.dao.PeerDO
+import com.github.blanexie.dao.UserTorrentDO
 import com.github.blanexie.dao.peerDO
 import com.github.blanexie.dao.userTorrentDO
 import com.github.blanexie.nexusj.bencode.bencode
@@ -56,21 +57,20 @@ fun Route.tracker() {
             return@get
         }
         //1.2 完善peer中的userId信息
-        val userTorrentDO =
-            database().userTorrentDO.findLast { (it.authKey eq peer.authKey) and (it.infoHash eq peer.infoHash) }
+        val userTorrentDO = UserTorrentDO.findByInfoHashAndAuthKey(peer.infoHash, peer.authKey)
         if (userTorrentDO == null) {
             call.respond(bencode.encode(hashMapOf("failReason" to "Operation without permission")))
             return@get
         }
-        peer.userId = userTorrentDO.userId
+
         // 2. 找出符合的peer返回
         val peerDOs = database().peerDO.filter {
             (it.infoHash eq peer.infoHash) and (it.event inList peerEvent)
         }.toList()
         // 2.1 找出本机peer
-        var peerDO: PeerDO? = peerDOs.findLast { it.userId == peer.userId }
+        var peerDO: PeerDO? = peerDOs.findLast { it.authKey == peer.authKey }
         if (peerDO == null) {
-            database().peerDO.add(peer)
+            peer.save()
         } else {
             // 2.2 查看当前用户是否有两个客户端下载
             if (peer.peerId != peerDO.peerId) {
@@ -78,7 +78,7 @@ fun Route.tracker() {
                 return@get
             } else {
                 peer.id = peerDO.id
-                database().peerDO.update(peer)
+                peer.update()
             }
         }
 

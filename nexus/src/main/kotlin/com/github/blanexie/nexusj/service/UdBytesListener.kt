@@ -2,6 +2,7 @@ package com.github.blanexie.nexusj.service
 
 import com.github.blanexie.dao.PeerDO
 import com.github.blanexie.dao.UdBytesDO
+import com.github.blanexie.dao.UserTorrentDO
 import com.github.blanexie.dao.udBytesDO
 import com.github.blanexie.nexusj.support.database
 import com.github.blanexie.nexusj.support.event.Event
@@ -31,9 +32,10 @@ class UdBytesListener : Listener {
         udBytesDO.status = 0
         udBytesDO.authKey = peerDO.authKey
         udBytesDO.uploadTime = peerDO.reportTime
-        udBytesDO.userId= peerDO.userId
-        udBytesDO.status=0
-        database().udBytesDO.add(udBytesDO)
+        udBytesDO.status = 0
+        val userTorrentDO = UserTorrentDO.findByInfoHashAndAuthKey(peerDO.infoHash, peerDO.authKey)
+        udBytesDO.userId = userTorrentDO!!.userId
+        udBytesDO.save()
     }
 
 }

@@ -26,14 +26,11 @@ val simpleJWT = SimpleJWT()
 fun buildUserPrincipal(jwtDecode: String): UserPrincipal {
     val fromJson = JSONUtil.parseObj(jwtDecode)
     val userDO = UserDO()
-    userDO.id = fromJson["id"] as Int
-    userDO.nick = fromJson["nick"] as String
-    userDO.roleId = fromJson["roleId"] as Int
-    userDO.avatar = fromJson["avatar"] as String
-    userDO.email = fromJson["email"] as String
-    userDO.authKey = fromJson["authKey"] as String
-    userDO.createTime = LocalDateTime.parse(fromJson["createTime"] as String, dateFormat)
-    userDO.sex = fromJson["sex"] as Int
+    fromJson.forEach { t, u ->
+        run {
+            userDO[t] = u
+        }
+    }
     return UserPrincipal(userDO)
 }
 
@@ -58,7 +55,7 @@ fun Application.nexus(testing: Boolean = true) {
         method(HttpMethod.Delete)
         method(HttpMethod.Patch)
         header(HttpHeaders.Authorization)
-        header( "X-Token")
+        header("X-Token")
         allowCredentials = true
         allowNonSimpleContentTypes = true
         anyHost()

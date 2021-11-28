@@ -4,7 +4,6 @@ import cn.hutool.core.util.IdUtil
 import cn.hutool.core.util.URLUtil
 import com.dampcake.bencode.BencodeInputStream
 import com.github.blanexie.dao.*
-import com.github.blanexie.nexusj.bencode.toBeMap
 import com.github.blanexie.nexusj.bencode.toTorrent
 import com.github.blanexie.nexusj.controller.param.Result
 import com.github.blanexie.nexusj.controller.param.UserQuery
@@ -16,10 +15,9 @@ import io.ktor.http.content.*
 import io.ktor.request.*
 import io.ktor.response.*
 import io.ktor.routing.*
-import org.ktorm.dsl.*
+import org.ktorm.dsl.and
+import org.ktorm.dsl.eq
 import org.ktorm.entity.add
-import org.ktorm.entity.filter
-import org.ktorm.entity.first
 import org.ktorm.entity.firstOrNull
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -45,10 +43,9 @@ fun Route.notAuth() {
         userDO.sex = signUpParam.sex!!
         userDO.status = 0
         userDO.updateTime = LocalDateTime.now()
-        userDO.authKey = IdUtil.fastSimpleUUID()
-        database().userDO.add(userDO)
+        userDO.save()
         userDO.pwd = ""
-        call.respond(Result(body = mapOf("user" to userDO)))
+        call.respond(Result(body = mapOf("user" to userDO.properties)))
     }
 
     /**
@@ -62,10 +59,8 @@ fun Route.notAuth() {
             return@post
         }
 
-        val userStr =
-            "{'id':${userDO.id} ,'authKey':'${userDO.authKey}','avatar':'${userDO.avatar}', 'roleId':${userDO.roleId},'createTime':'${userDO.createTime.format(dateFormat)}', 'nick':'${userDO.nick}', 'email':'${userDO.email}','sex':${userDO.sex}  }"
-
-        val token = call.application.jwtSign(userStr)
+        userDO.pwd = ""
+        val token = call.application.jwtSign(gson.toJson(userDO.properties))
         call.respond(Result(body = mapOf("token" to token)))
         return@post
     }
@@ -77,8 +72,12 @@ fun Route.auth() {
     get("/user/info") {
         val principal = call.authentication.principal<UserPrincipal>()!!
         val user = principal.user
-        val roleDO:RoleDO = database().roleDO.first { it.id eq user.roleId }
-        call.respond(Result(body = mapOf("user" to user, "role" to roleDO)))
+        val roleDO: RoleDO? = RoleDO.findById(user.roleId)
+        if (roleDO == null) {
+            call.respond(Result.NotFoundRoleError)
+            return@get
+        }
+        call.respond(Result(body = mapOf("user" to user.properties, "role" to roleDO.properties)))
         return@get
     }
 
@@ -89,34 +88,28 @@ fun Route.auth() {
         val principal = call.authentication.principal<UserPrincipal>()!!
         val user = principal.user
         val id = call.request.queryParameters["id"]!!.toInt()
-        val torrentDO = database().torrentDO.first { it.id eq id }
+        val torrentDO = TorrentDO.findById(id)
 
         if (torrentDO == null) {
             call.respond(Result(code = 404, message = "下载的种子不存在"))
             return@get
         }
         //增加一条userTorrent记录
-        var userTorrentDO =
-            database().userTorrentDO.firstOrNull { (it.infoHash eq torrentDO.infoHash) and (it.userId eq user.id) }
+        var userTorrentDO = UserTorrentDO.findByInfoHashAndUserId(torrentDO.infoHash, user.id)
         if (userTorrentDO == null) {
             userTorrentDO = buildUserTorrent(torrentDO, user.id)
-            database().userTorrentDO.add(userTorrentDO)
+            userTorrentDO.save()
         }
 
-        //构建下载者的announce
-        val announceUrl = setting["pt.announce.url"]
-        torrentDO.announce = "${announceUrl}?auth_key=${userTorrentDO.authKey}"
+        // 获取下载文件位置
+        val torrentPath = setting["torrent.path"]
+        val outBytes = fileCache.getFileBytes("${torrentPath}/${torrentDO.infoHash}")
 
-        val info = database().from(Info).select(Info.infoHash, Info.info)
-            .where { Info.infoHash eq torrentDO.infoHash }.limit(1)
-            .map { it.getBytes(2) }
-            .last()
-
-        val fileName = "attachment; filename='${URLUtil.encode(torrentDO.name)}.torrent' ; charset=utf-8"
+        val fileName = "attachment; filename='${URLUtil.encode(torrentDO.title)}.torrent'; charset=utf-8"
         //返回
         call.response.header("content-disposition", fileName)
         call.respondBytes(
-            bytes = toBeMap(torrentDO, info!!),
+            bytes = outBytes,
             contentType = ContentType.parse("application/x-bittorrent")
         )
     }
@@ -124,30 +117,17 @@ fun Route.auth() {
      * 上传文件
      */
     post("/upload/torrent") {
-        val principal = call.authentication.principal<UserPrincipal>()!!
-        val user = principal.user!!
         val reqMap = receiveFrom(call.receiveMultipart())
-        val torrentFile = toTorrent(reqMap, user.id)
-        val torrent = torrentFile.first
+        val torrentDO = toTorrent(reqMap)
         //查询是否已经存在
-        val existTorrentDO = database().torrentDO.filter { it.infoHash eq torrent.infoHash }
-            .firstOrNull()
+        val existTorrentDO = TorrentDO.findByInfoHash(torrentDO.infoHash)
         if (existTorrentDO != null) {
             call.respond(Result(40000, "不要上传重复的文件"))
             return@post
         }
-
-        database().useTransaction {
-            try {
-                database().infoDO.add(torrentFile.second)
-                database().torrentDO.add(torrent)
-                it.commit()
-            } catch (e: Exception) {
-                it.rollback()
-                logger.error("", e)
-            }
-        }
+        torrentDO.save()
         call.respond(Result())
+        return@post
     }
 }
 
