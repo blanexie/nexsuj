@@ -1,24 +1,56 @@
 package com.github.blanexie.dao
 
 
+import cn.hutool.core.date.LocalDateTimeUtil
+import com.github.blanexie.nexusj.controller.param.TorrentQuery
 import com.github.blanexie.nexusj.support.database
+import com.github.blanexie.nexusj.support.gson
 import org.ktorm.database.Database
-import org.ktorm.dsl.and
-import org.ktorm.dsl.eq
-import org.ktorm.dsl.greaterEq
+import org.ktorm.database.asIterable
+import org.ktorm.dsl.*
 import org.ktorm.entity.*
+import org.ktorm.expression.*
 import org.ktorm.jackson.json
 import org.ktorm.schema.*
+import java.sql.Connection
 import java.time.LocalDateTime
 
+
+/*********************** 配置信息表 ******************************/
+
+val Database.attribute get() = this.sequenceOf(Attribute)
+
+interface AttributeDO : Entity<AttributeDO> {
+    companion object : Entity.Factory<UserDO>() {
+        fun findById(id: Int): RoleDO? {
+            return database().roleDO.singleOrNull { it.id eq id }
+        }
+    }
+
+    var id: Int
+
+    //配置类型， 'label':"标识种子标签"
+    var type: String
+    var name: String
+    var value: String
+
+    fun save() {
+        database().attribute.add(this)
+    }
+}
+
+object Attribute : Table<AttributeDO>("role") {
+    var id = int("id").primaryKey().bindTo { it.id }
+    var type = varchar("type").bindTo { it.type }
+    var name = varchar("name").bindTo { it.name }
+    var value = text("value").bindTo { it.value }
+}
 
 /*********************** 上报流量流水表, 根据这个流水确定用户的总上传 下载 和积分 , 这个表需要定期清理 ******************************/
 val Database.udBytesDO get() = this.sequenceOf(UdBytes)
 
 interface UdBytesDO : Entity<UdBytesDO> {
     companion object : Entity.Factory<UdBytesDO>() {
-
-
     }
 
     var id: Int
@@ -293,15 +325,20 @@ interface TorrentDO : Entity<TorrentDO> {
         fun findByInfoHash(infoHash: String): TorrentDO? {
             return database().torrentDO.singleOrNull { it.infoHash eq infoHash }
         }
+
+        fun findByQuery(torrentQuery: TorrentQuery): List<TorrentDO> {
+            val torrentList = database().useConnection { conn ->
+                val (params, sqlB) = buildSqlAndParams(torrentQuery)
+                listTorrent(conn, sqlB, params)
+            }
+            return torrentList
+        }
     }
 
     var id: Int
 
     //info部分的sha1值. 默认urlencode编码的字符串
     var infoHash: String
-
-    //torrent文件保存服务器的相对地址
-    var path: String
 
     //标题
     var title: String
@@ -317,6 +354,9 @@ interface TorrentDO : Entity<TorrentDO> {
 
     //封面图片
     var coverPath: String
+
+    //关联图片
+    var imgList: List<String>
 
     //文件描述
     var description: String
@@ -335,7 +375,7 @@ interface TorrentDO : Entity<TorrentDO> {
     var ratio: Int
 
     //上传下载 回复正常的时间点
-    var rationTime: LocalDateTime
+    var rationTime: LocalDateTime?
 
     fun save() {
         database().torrentDO.add(this)
@@ -347,8 +387,6 @@ object Torrent : Table<TorrentDO>("torrent") {
     var id = int("id").primaryKey().bindTo { it.id }
 
     var infoHash = varchar("info_hash").bindTo { it.infoHash }
-    var path = varchar("path").bindTo { it.path }
-
     var title = varchar("title").bindTo { it.title }
     var size = long("size").bindTo { it.size }
     var type = varchar("type").bindTo { it.type }
@@ -356,6 +394,7 @@ object Torrent : Table<TorrentDO>("torrent") {
 
     //封面图片
     var coverPath = varchar("cover_path").bindTo { it.coverPath }
+    var imgList = json<List<String>>("img_list").bindTo { it.imgList }
 
     //文件描述
     var description = text("description").bindTo { it.description }
@@ -365,4 +404,76 @@ object Torrent : Table<TorrentDO>("torrent") {
     var ratio = int("ratio").bindTo { it.ratio }
     var rationTime = datetime("ration_time").bindTo { it.rationTime }
 
+}
+
+private fun listTorrent(
+    conn: Connection,
+    sqlB: StringBuilder,
+    params: MutableList<Any>
+): List<TorrentDO> {
+    val torrents = conn.prepareStatement(sqlB.toString()).use { statement ->
+        for ((index, param) in params.withIndex()) {
+            statement.setObject(index + 1, param)
+        }
+        val torrentList = statement.executeQuery().asIterable().map {
+            val torrentDO = TorrentDO()
+            torrentDO.id = it.getInt("id")
+            torrentDO.description = it.getString("description")
+            torrentDO.ratio = it.getInt("ratio")
+            torrentDO.coverPath = it.getString("cover_path")
+            torrentDO.files =
+                gson.fromJson<List<Map<String, Any>>>(it.getString("files"), List::class.java)
+            torrentDO.infoHash = it.getString("info_hash")
+            torrentDO.labels = gson.fromJson<List<String>>(it.getString("labels"), List::class.java)
+            torrentDO.rationTime = LocalDateTimeUtil.of(it.getTimestamp("ration_time"))
+            torrentDO.size = it.getLong("size")
+            torrentDO.status = it.getInt("status")
+            torrentDO.title = it.getString("title")
+            torrentDO.type = it.getString("type")
+            torrentDO.uploadTime = LocalDateTimeUtil.of(it.getTimestamp("upload_time"))
+            torrentDO
+        }
+        torrentList
+    }
+    return torrents
+}
+
+private fun buildSqlAndParams(torrentQuery: TorrentQuery): Pair<MutableList<Any>, StringBuilder> {
+    val params = mutableListOf<Any>()
+    val sqlB = StringBuilder("select * from torrent where 1 = 1 ")
+    if (torrentQuery.infoHash != null) {
+        sqlB.append(" and info_hash = ? ")
+        params.add(torrentQuery.infoHash!!)
+    }
+    if (torrentQuery.title != null) {
+        sqlB.append(" and title = ? ")
+        params.add(torrentQuery.title!!)
+    }
+    if (torrentQuery.type != null) {
+        sqlB.append(" and type = ? ")
+        params.add(torrentQuery.type!!)
+    }
+    if (torrentQuery.ratio != null) {
+        sqlB.append(" and ratio = ? ")
+        params.add(torrentQuery.ratio!!)
+    }
+    if (torrentQuery.labels != null && torrentQuery.labels!!.isNotEmpty()) {
+        sqlB.append(" and (")
+        var first = true
+        torrentQuery.labels!!.forEach {
+            if (first) {
+                sqlB.append(" JSON_CONTAINS( '[1,2,3,4]', ?, '$')  ")
+                params.add(it!!)
+            } else {
+                sqlB.append(" OR JSON_CONTAINS( '[1,2,3,4]',  ?, '$')  ")
+                params.add(it!!)
+            }
+        }
+        sqlB.append(" ) ")
+    }
+    sqlB.append(" limit ?,?")
+    params.add((torrentQuery.pageNo - 1) * torrentQuery.pageSize)
+    params.add(torrentQuery.pageSize)
+
+    return Pair(params, sqlB)
 }

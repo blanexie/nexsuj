@@ -1,11 +1,16 @@
 package com.github.blanexie.nexusj.controller
 
+import cn.hutool.core.io.FileUtil
+import cn.hutool.core.io.IoUtil
+import cn.hutool.core.util.HashUtil
 import cn.hutool.core.util.IdUtil
 import cn.hutool.core.util.URLUtil
+import cn.hutool.crypto.digest.MD5
 import com.dampcake.bencode.BencodeInputStream
 import com.github.blanexie.dao.*
 import com.github.blanexie.nexusj.bencode.toTorrent
 import com.github.blanexie.nexusj.controller.param.Result
+import com.github.blanexie.nexusj.controller.param.TorrentQuery
 import com.github.blanexie.nexusj.controller.param.UserQuery
 import com.github.blanexie.nexusj.support.*
 import io.ktor.application.*
@@ -17,11 +22,13 @@ import io.ktor.response.*
 import io.ktor.routing.*
 import org.ktorm.dsl.and
 import org.ktorm.dsl.eq
-import org.ktorm.entity.add
 import org.ktorm.entity.firstOrNull
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import java.io.BufferedInputStream
+import java.io.File
 import java.time.LocalDateTime
+import java.util.function.Function
 import kotlin.collections.set
 
 val logger: Logger = LoggerFactory.getLogger("NexusController")!!
@@ -68,6 +75,16 @@ fun Route.notAuth() {
 
 
 fun Route.auth() {
+
+    /**
+     * 搜索查询
+     */
+    post("/torrent/list") {
+        val torrentQuery = call.receive<TorrentQuery>()
+        val result = TorrentDO.findByQuery(torrentQuery).map { it.properties }
+        call.respond(Result(body = mapOf("result" to result)))
+        return@post
+    }
 
     get("/user/info") {
         val principal = call.authentication.principal<UserPrincipal>()!!
@@ -118,6 +135,10 @@ fun Route.auth() {
      */
     post("/upload/torrent") {
         val reqMap = receiveFrom(call.receiveMultipart())
+        if (reqMap.containsKey("result")) {
+            call.respond(reqMap["result"]!!)
+            return@post
+        }
         val torrentDO = toTorrent(reqMap)
         //查询是否已经存在
         val existTorrentDO = TorrentDO.findByInfoHash(torrentDO.infoHash)
@@ -136,9 +157,31 @@ suspend fun receiveFrom(multipartData: MultiPartData): Map<String, Any> {
     multipartData.forEachPart { partData ->
         when (partData) {
             is PartData.FileItem -> {
-                reqMap["torrent"] =
-                    BencodeInputStream(partData.streamProvider(), charset("utf8"), true).readDictionary()
+                val name = partData.name
+                if (name == "torrent") {
+                    reqMap[name] =
+                        BencodeInputStream(partData.streamProvider(), charset("utf8"), true).readDictionary()
+                } else {
+                    val originalFileName = partData.originalFileName
+                    if (originalFileName!!.endsWith(".jpg") || originalFileName.endsWith(".png")) {
+                        val fastSimpleUUID = IdUtil.fastSimpleUUID()
+                        val file = File("$tempDir/$fastSimpleUUID")
+                        file.outputStream().use { out ->
+                            IoUtil.copy(partData.streamProvider(), out)
+                        }
+                        val imgList = reqMap["imgList"] ?: arrayListOf<String>()
+                        val arrayList = imgList as ArrayList<String>
+                        arrayList.add(fastSimpleUUID)
+                        reqMap["imgList"] = arrayList
+
+                    } else {
+                        reqMap.clear()
+                        reqMap["result"] = Result.BadFileUpload
+                        return@forEachPart
+                    }
+                }
             }
+
             is PartData.FormItem -> {
                 reqMap[partData.name!!] = partData.value
             }
@@ -147,6 +190,7 @@ suspend fun receiveFrom(multipartData: MultiPartData): Map<String, Any> {
             }
         }
     }
+
     return reqMap
 }
 

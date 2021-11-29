@@ -1,9 +1,11 @@
 import request from '@/utils/request'
 
+import store from "@/store";
+
 export function getList(params) {
   return request({
-    url: '/vue-admin-template/table/list',
-    method: 'get',
-    params
+    url: '/torrent/list',
+    method: 'post',
+    data: params
   })
 }

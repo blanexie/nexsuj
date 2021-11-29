@@ -55,7 +55,6 @@ fun Application.nexus(testing: Boolean = true) {
         method(HttpMethod.Delete)
         method(HttpMethod.Patch)
         header(HttpHeaders.Authorization)
-        header("X-Token")
         allowCredentials = true
         allowNonSimpleContentTypes = true
         anyHost()
