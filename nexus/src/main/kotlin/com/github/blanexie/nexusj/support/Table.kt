@@ -339,7 +339,8 @@ interface TorrentDO : Entity<TorrentDO> {
 
     //info部分的sha1值. 默认urlencode编码的字符串
     var infoHash: String
-
+    //种子中的文件名
+    var name: String
     //标题
     var title: String
 
@@ -372,7 +373,7 @@ interface TorrentDO : Entity<TorrentDO> {
 
     //种子 优惠力度
     //1: 正常上传下载 2： 免费下载， 正常上传 3：免费下载，双倍上传 ........
-    var ratio: Int
+    var ration: Int
 
     //上传下载 回复正常的时间点
     var rationTime: LocalDateTime?
@@ -387,6 +388,7 @@ object Torrent : Table<TorrentDO>("torrent") {
     var id = int("id").primaryKey().bindTo { it.id }
 
     var infoHash = varchar("info_hash").bindTo { it.infoHash }
+    var name = varchar("name").bindTo { it.name }
     var title = varchar("title").bindTo { it.title }
     var size = long("size").bindTo { it.size }
     var type = varchar("type").bindTo { it.type }
@@ -401,7 +403,7 @@ object Torrent : Table<TorrentDO>("torrent") {
     var files = json<List<Map<String, Any>>>("files").bindTo { it.files }
     var uploadTime = datetime("upload_time").bindTo { it.uploadTime }
     var status = int("status").bindTo { it.status }
-    var ratio = int("ratio").bindTo { it.ratio }
+    var ration = int("ration").bindTo { it.ration }
     var rationTime = datetime("ration_time").bindTo { it.rationTime }
 
 }
@@ -419,15 +421,16 @@ private fun listTorrent(
             val torrentDO = TorrentDO()
             torrentDO.id = it.getInt("id")
             torrentDO.description = it.getString("description")
-            torrentDO.ratio = it.getInt("ratio")
+            torrentDO.ration = it.getInt("ration")
             torrentDO.coverPath = it.getString("cover_path")
-            torrentDO.files =
-                gson.fromJson<List<Map<String, Any>>>(it.getString("files"), List::class.java)
+            torrentDO.imgList = gson.fromJson<List<String>>(it.getString("img_list"), List::class.java)
+            torrentDO.files = gson.fromJson<List<Map<String, Any>>>(it.getString("files"), List::class.java)
             torrentDO.infoHash = it.getString("info_hash")
             torrentDO.labels = gson.fromJson<List<String>>(it.getString("labels"), List::class.java)
             torrentDO.rationTime = LocalDateTimeUtil.of(it.getTimestamp("ration_time"))
             torrentDO.size = it.getLong("size")
             torrentDO.status = it.getInt("status")
+            torrentDO.name = it.getString("name")
             torrentDO.title = it.getString("title")
             torrentDO.type = it.getString("type")
             torrentDO.uploadTime = LocalDateTimeUtil.of(it.getTimestamp("upload_time"))

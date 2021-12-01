@@ -2,22 +2,22 @@ create table peer
 (
     id          int auto_increment
         primary key,
-    info_hash   varchar(100)                       not null,
-    peer_id     varchar(100)                       not null,
-    port        int                                not null,
-    uploaded    bigint                             not null,
-    downloaded  bigint                             not null,
-    `left`      bigint                             not null,
-    compact     int      default 1                 not null,
-    event       varchar(100)                       not null,
-    ip          varchar(1024)                      null,
-    ipv6        varchar(1024)                      null,
-    numwant     int                                null,
-    trackerid   varchar(100)                       null,
-    auth_key    varchar(100)                       not null,
-    create_time datetime default CURRENT_TIMESTAMP not null,
-    report_time datetime                           null,
-    status      int      default 0                 not null comment '默认0 , 如果-1 就是表示这个peerId被禁用了'
+    info_hash   varchar(100)                         not null,
+    peer_id     varchar(100)                         not null,
+    port        int                                  not null,
+    uploaded    bigint                               not null,
+    downloaded  bigint                               not null,
+    `left`      bigint                               not null,
+    compact     int      default 1                   not null,
+    event       varchar(100)                         not null,
+    ip          varchar(1024)                        null,
+    ipv6        varchar(1024)                        null,
+    numwant     int                                  null,
+    trackerid   varchar(100)                         null,
+    auth_key    varchar(100)                         not null,
+    create_time datetime default current_timestamp() not null,
+    report_time datetime                             null,
+    status      int      default 0                   not null comment '默认0 , 如果-1 就是表示这个peerId被禁用了'
 );
 
 create index peer_auth_key_IDX

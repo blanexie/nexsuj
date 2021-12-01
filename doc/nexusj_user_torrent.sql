@@ -2,15 +2,15 @@ create table user_torrent
 (
     id            int auto_increment
         primary key,
-    user_id       int                                       not null,
-    info_hash     varchar(100)                              not null,
-    create_time   datetime        default CURRENT_TIMESTAMP not null,
-    auth_key      varchar(100)                              not null,
-    upload        bigint unsigned default '0'               null,
-    download      bigint unsigned default '0'               null,
-    real_upload   bigint unsigned default '0'               null,
-    real_download bigint unsigned default '0'               null,
-    status        int             default 0                 not null,
+    user_id       int                                         not null,
+    info_hash     varchar(100)                                not null,
+    create_time   datetime        default current_timestamp() not null,
+    auth_key      varchar(100)                                not null,
+    upload        bigint unsigned default 0                   null,
+    download      bigint unsigned default 0                   null,
+    real_upload   bigint unsigned default 0                   null,
+    real_download bigint unsigned default 0                   null,
+    status        int             default 0                   not null,
     constraint user_torrent_info_hash_IDX
         unique (info_hash, auth_key)
 );

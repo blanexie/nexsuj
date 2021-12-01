@@ -12,3 +12,6 @@ var fileCache = LFUFileCache(1024 * 1024 * 10, 1024 * 100, 60 * 60_000)
  * 临时文件夹地址
  */
 val tempDir = System.getProperty("java.io.tmpdir")
+
+
+val UTF8 = Charsets.UTF_8
