@@ -163,16 +163,32 @@ suspend fun receiveFrom(multipartData: MultiPartData): Map<String, Any> {
                         BencodeInputStream(partData.streamProvider(), charset("utf8"), true).readDictionary()
                 } else {
                     val originalFileName = partData.originalFileName
+                    //限制， 只接受特定后缀的文件
                     if (originalFileName!!.endsWith(".jpg") || originalFileName.endsWith(".png")) {
-                        val fastSimpleUUID = IdUtil.fastSimpleUUID()
-                        val file = File("$tempDir/$fastSimpleUUID")
-                        file.outputStream().use { out ->
-                            IoUtil.copy(partData.streamProvider(), out)
+                        val lastIndexOf = originalFileName.lastIndexOf(".")
+                        val suffix= originalFileName.substring(lastIndexOf)
+                        //限定 只接受特定参数名称的文件
+                        if(name == "imgList"){
+                            //修改文件名称，防止
+                            val fastSimpleUUID = IdUtil.fastSimpleUUID()
+                            val file = File("$tempDir/$fastSimpleUUID$suffix")
+                            file.outputStream().use { out ->
+                                IoUtil.copy(partData.streamProvider(), out)
+                            }
+                            val imgList = reqMap["imgList"] ?: arrayListOf<String>()
+                            val arrayList = imgList as ArrayList<String>
+                            arrayList.add(fastSimpleUUID)
+                            reqMap["imgList"] = arrayList
                         }
-                        val imgList = reqMap["imgList"] ?: arrayListOf<String>()
-                        val arrayList = imgList as ArrayList<String>
-                        arrayList.add(fastSimpleUUID)
-                        reqMap["imgList"] = arrayList
+                        //限定 只接受特定参数名称的文件
+                        if(name == "coverPath"){
+                            val fastSimpleUUID = IdUtil.fastSimpleUUID()
+                            val file = File("$tempDir/$fastSimpleUUID$suffix")
+                            file.outputStream().use { out ->
+                                IoUtil.copy(partData.streamProvider(), out)
+                            }
+                            reqMap["coverPath"] = fastSimpleUUID
+                        }
 
                     } else {
                         reqMap.clear()

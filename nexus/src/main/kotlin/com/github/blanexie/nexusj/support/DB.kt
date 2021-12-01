@@ -4,6 +4,7 @@ import com.github.blanexie.dao.torrentDO
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import org.ktorm.database.Database
+import org.ktorm.database.SqlDialect
 import org.ktorm.dsl.eq
 import org.ktorm.expression.ArgumentExpression
 import org.ktorm.expression.BinaryExpression
@@ -13,7 +14,7 @@ import org.ktorm.logging.Slf4jLoggerAdapter
 import org.ktorm.schema.BooleanSqlType
 import org.ktorm.schema.ColumnDeclaring
 import org.ktorm.schema.SqlType
-import org.ktorm.support.mysql.MySqlDialect
+
 import org.slf4j.LoggerFactory
 
 val logger = LoggerFactory.getLogger("database")!!
@@ -25,7 +26,6 @@ fun database(): Database {
     if (database == null) {
         database = Database.connect(
             HikariDataSource(hikariConfig()),
-            dialect = MySqlDialect(),
             logger = Slf4jLoggerAdapter(logger)
         )
     }

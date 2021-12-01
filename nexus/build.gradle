@@ -20,10 +20,11 @@ dependencies {
 
     compile 'org.ktorm:ktorm-core:${ktorm_version}'
     compile "org.ktorm:ktorm-jackson:${ktorm_version}"
-    compile "org.ktorm:ktorm-support-mysql:${ktorm_version}"
+
 
     compile 'com.zaxxer:HikariCP:5.0.0'
-    compile 'mysql:mysql-connector-java:8.0.26'
+    implementation 'org.mariadb.jdbc:mariadb-java-client:2.7.4'
+
 
 
     compile "io.ktor:ktor-gson:$ktor_version"

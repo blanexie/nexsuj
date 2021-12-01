@@ -1,9 +1,9 @@
 create table role
 (
-    id         int         null,
-    name       varchar(64) null comment '角色名',
-    properties json        null
+    id        int         null,
+    name      varchar(64) null comment '角色名',
+    attribute json        null
 );
 
-INSERT INTO nexusj.role (id, name, properties) VALUES (1, '管理员', '{}');
-INSERT INTO nexusj.role (id, name, properties) VALUES (2, '普通用户', '{}');
+INSERT INTO nexusj.role (id, name, attribute) VALUES (1, '管理员', '{}');
+INSERT INTO nexusj.role (id, name, attribute) VALUES (2, '普通用户', '{}');
