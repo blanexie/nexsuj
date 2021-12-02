@@ -1,11 +1,8 @@
 package com.github.blanexie.nexusj.controller
 
-import cn.hutool.core.io.FileUtil
 import cn.hutool.core.io.IoUtil
-import cn.hutool.core.util.HashUtil
 import cn.hutool.core.util.IdUtil
 import cn.hutool.core.util.URLUtil
-import cn.hutool.crypto.digest.MD5
 import com.dampcake.bencode.BencodeInputStream
 import com.github.blanexie.dao.*
 import com.github.blanexie.nexusj.bencode.toTorrent
@@ -25,10 +22,8 @@ import org.ktorm.dsl.eq
 import org.ktorm.entity.firstOrNull
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import java.io.BufferedInputStream
 import java.io.File
 import java.time.LocalDateTime
-import java.util.function.Function
 import kotlin.collections.set
 
 val logger: Logger = LoggerFactory.getLogger("NexusController")!!
@@ -81,8 +76,17 @@ fun Route.auth() {
      */
     post("/torrent/list") {
         val torrentQuery = call.receive<TorrentQuery>()
-        val result = TorrentDO.findByQuery(torrentQuery).map { it.properties }
-        call.respond(Result(body = mapOf("result" to result)))
+        val result = TorrentDO.findByQuery(torrentQuery)
+        val ids = result.map { it.userId }.toList()
+        val userDOs = UserDO.findByIds(ids)
+        val map1 = result.map { torrent ->
+            val first = userDOs.first { it.id == torrent.userId }
+            val map = mutableMapOf<String, Any?>()
+            torrent.properties.forEach { (t, u) -> map[t] = u }
+            map["uploadUserName"] = first.nick
+            map
+        }
+        call.respond(Result(body = mapOf("result" to map1)))
         return@post
     }
 

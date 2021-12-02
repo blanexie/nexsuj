@@ -14,6 +14,8 @@ import router from './router'
 
 import '@/icons' // icon
 import '@/permission' // permission control
+import moment from 'moment'
+
 
 /**
  * If you don't want to use mock-server
@@ -24,16 +26,37 @@ import '@/permission' // permission control
  * please remove it before going online ! ! !
  */
 if (process.env.NODE_ENV === 'production') {
-  const { mockXHR } = require('../mock')
+  const {mockXHR} = require('../mock')
   mockXHR()
 }
 
 // set ElementUI lang to EN
-Vue.use(ElementUI, { locale })
+Vue.use(ElementUI, {locale})
 // 如果想要中文版 element-ui，按如下方式声明
 // Vue.use(ElementUI)
 
 Vue.config.productionTip = false
+
+Vue.prototype.$moment = moment
+Vue.prototype.$showSize =
+  function (size) {
+    if (size > 1099511627776) {
+      let r = Math.round(100 * size / 1099511627776) / 100
+      return r + "T"
+    }
+    if (size > 1073741824) {
+      let r = Math.round(100 * size / 1073741824) / 100
+      return r + "G"
+    }
+    if (size > 1048576) {
+      let r = Math.round(100 * size / 1048576) / 100
+      return r + "M"
+    }
+
+    let r = Math.round(100 * size / 1024) / 100
+    return r + "kb"
+  }
+
 
 new Vue({
   el: '#app',
@@ -41,3 +64,6 @@ new Vue({
   store,
   render: h => h(App)
 })
+
+
+

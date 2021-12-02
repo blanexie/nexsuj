@@ -115,7 +115,11 @@ object Role : Table<RoleDO>("role") {
 val Database.userDO get() = this.sequenceOf(User)
 
 interface UserDO : Entity<UserDO> {
-    companion object : Entity.Factory<UserDO>()
+    companion object : Entity.Factory<UserDO>(){
+        fun findByIds(ids:List<Int>):List<UserDO>{
+           return database().userDO.filter { it.id inList ids }.toList()
+        }
+    }
 
     var id: Int
     var email: String
@@ -377,6 +381,9 @@ interface TorrentDO : Entity<TorrentDO> {
 
     //上传下载 回复正常的时间点
     var rationTime: LocalDateTime?
+    //上传的用户
+    var userId: Int
+
 
     fun save() {
         database().torrentDO.add(this)
@@ -405,6 +412,7 @@ object Torrent : Table<TorrentDO>("torrent") {
     var status = int("status").bindTo { it.status }
     var ration = int("ration").bindTo { it.ration }
     var rationTime = datetime("ration_time").bindTo { it.rationTime }
+    var userId = int("user_id").bindTo { it.userId }
 
 }
 
@@ -433,6 +441,7 @@ private fun listTorrent(
             torrentDO.name = it.getString("name")
             torrentDO.title = it.getString("title")
             torrentDO.type = it.getString("type")
+            torrentDO.userId = it.getInt("user_id")
             torrentDO.uploadTime = LocalDateTimeUtil.of(it.getTimestamp("upload_time"))
             torrentDO
         }

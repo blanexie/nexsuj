@@ -1,7 +1,8 @@
 <template>
   <div class="app-container">
     <el-table
-      v-loading="listLoading" :data="list" size="small"
+      v-loading="listLoading" :data="list"
+      :cell-style="{padding:0+'px'}"
       element-loading-text="Loading" border fit highlight-current-row
     >
       <el-table-column align="center" label="类型" width="55">
@@ -31,33 +32,33 @@
 
       <el-table-column label="上传时间" width="100" align="center">
         <template slot-scope="scope">
-          <span>{{ scope.row.uploadTime }}</span>
+          <span>{{ formatDate(scope.row.uploadTime) }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="大小" width="60" align="center">
+      <el-table-column label="大小" width="70" align="center">
         <template slot-scope="scope">
-          {{ scope.row.size }}
+          {{ showSize(scope.row.size) }}
         </template>
       </el-table-column>
-      <el-table-column label="做种" width="60" align="center">
+      <el-table-column label="做种" width="50" align="center">
         <template slot-scope="scope">
           {{ scope.row.status }}
         </template>
       </el-table-column>
 
-      <el-table-column label="下载" width="60" align="center">
+      <el-table-column label="下载" width="50" align="center">
         <template slot-scope="scope">
           {{ scope.row.status }}
         </template>
       </el-table-column>
-      <el-table-column label="完成" width="60" align="center">
+      <el-table-column label="完成" width="50" align="center">
         <template slot-scope="scope">
           {{ scope.row.status }}
         </template>
       </el-table-column>
       <el-table-column label="发布者" width="80" align="center">
         <template slot-scope="scope">
-          {{ scope.row.status }}
+          {{ scope.row.uploadUserName }}
         </template>
       </el-table-column>
     </el-table>
@@ -91,12 +92,19 @@ export default {
   methods: {
     fetchData() {
       this.listLoading = true
-      //  console.log( "safasfsafas",this.$store.state.user.token)
       getList(this.torrentQuery).then(response => {
         this.list = response.body.result
         this.listLoading = false
       })
+    },
+    showSize: function (size) {
+      return this.$showSize(size)
+    },
+    formatDate(millisecond) {
+      let ut = this.$moment(millisecond)
+      return ut.format("MM-DD hh:mm")
     }
+
   }
 }
 </script>

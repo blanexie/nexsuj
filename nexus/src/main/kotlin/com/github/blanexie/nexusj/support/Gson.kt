@@ -4,7 +4,7 @@ import com.google.gson.*
 import java.lang.reflect.Type
 import java.text.DateFormat
 import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
+import java.time.ZoneOffset
 
 
 val gson: Gson = GsonBuilder()
@@ -14,6 +14,7 @@ val gson: Gson = GsonBuilder()
     .setPrettyPrinting()
     .create()!!
 
+val zoneOffset = ZoneOffset.ofHours(8)!!
 
 class JsonSerializerImpl : JsonSerializer<LocalDateTime> {
     override fun serialize(
@@ -21,15 +22,13 @@ class JsonSerializerImpl : JsonSerializer<LocalDateTime> {
         type: Type,
         jsonSerializationContext: JsonSerializationContext
     ): JsonElement {
-        return JsonPrimitive(localDateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+        return JsonPrimitive(localDateTime.toInstant(zoneOffset).toEpochMilli())
     }
 }
 
 class JsonDeserializerImpl : JsonDeserializer<LocalDateTime> {
     override fun deserialize(json: JsonElement, typeOfT: Type, context: JsonDeserializationContext): LocalDateTime {
-        return LocalDateTime.parse(
-            json.getAsJsonPrimitive().getAsString(),
-            DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
-        );
+        val timestamp = json.asJsonPrimitive.asLong
+        return LocalDateTime.ofEpochSecond(timestamp / 1000, 0, zoneOffset)
     }
 }
