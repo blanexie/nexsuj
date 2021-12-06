@@ -3,10 +3,10 @@ package com.github.blanexie.nexusj.support
 import cn.hutool.core.io.resource.ClassPathResource
 import cn.hutool.json.JSONUtil
 import cn.hutool.setting.Setting
-import com.github.blanexie.dao.UserDO
 import com.github.blanexie.nexusj.controller.auth
 import com.github.blanexie.nexusj.controller.notAuth
 import com.github.blanexie.nexusj.controller.tracker
+import com.github.blanexie.nexusj.table.UserDO
 import io.ktor.application.*
 import io.ktor.auth.*
 import io.ktor.auth.jwt.*

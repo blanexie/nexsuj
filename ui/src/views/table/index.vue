@@ -3,6 +3,7 @@
     <el-table
       v-loading="listLoading" :data="list"
       :cell-style="{padding:0+'px'}"
+      style="width: 1080px"
       element-loading-text="Loading" border fit highlight-current-row
     >
       <el-table-column align="center" label="类型" width="55">
@@ -11,8 +12,7 @@
         </template>
       </el-table-column>
 
-
-      <el-table-column label="标题" min-width="600">
+      <el-table-column label="标题" min-idth="650">
         <template slot-scope="scope">
 
           <el-image class="cover" :src="scope.row.coverPath"
@@ -20,10 +20,15 @@
           </el-image>
 
           <ul class="nameAndTitle">
-            <li> {{ scope.row.name }}</li>
+            <li>
+              <div style="display: inline-block"> {{ scope.row.name }}</div>
+              <div style="display: inline-block; float:right; font-size: 20px"><i class="el-icon-download"></i></div>
+              <div style="display: inline-block; float:right;width: 30px; font-size: 20px"><i
+                :class="starClass(scope.row)"></i></div>
+            </li>
             <li> {{ scope.row.title }}</li>
             <li>
-              <el-progress :percentage="100" status="success"></el-progress>
+              <el-progress :percentage="showProgress(scope.row)" :format="format"></el-progress>
             </li>
           </ul>
         </template>
@@ -103,6 +108,25 @@ export default {
     formatDate(millisecond) {
       let ut = this.$moment(millisecond)
       return ut.format("MM-DD hh:mm")
+    },
+
+    showProgress(row) {
+      let d = row.downloaded ? row.downloaded : 0
+      let l = row.left ? row.left : 0
+      let dl = d + l
+      if (dl == 0) {
+        return 0
+      } else {
+        return Math.round(d * 1000 / dl) / 10
+      }
+    },
+    starClass(row) {
+      console.log(row.utStatus)
+      return row.utStatus != undefined ? "el-icon-star-on" : "el-icon-star-off"
+    },
+
+    format(percentage) {
+      return '';
     }
 
   }
@@ -112,9 +136,7 @@ export default {
 <style lang="scss" scoped>
 
 .app-container {
-  .table-title {
-    width: 650px;
-  }
+  text-align: center;
 
   .cover {
     margin: 10px;
@@ -123,18 +145,13 @@ export default {
     float: left;
   }
 
+  li {
+    list-style: none;
+  }
+
   .nameAndTitle ul {
-    margin: 0px 10px;
     float: left;
 
-    li {
-      margin: 2px 0px;
-      list-style: none;
-      white-space: nowrap; /*不让文字内容换行*/
-      overflow: hidden; /*文字溢出的部分隐藏起来*/
-      text-overflow: ellipsis; /*用...替代溢出的部分*/
-      width: 400px;
-    }
   }
 }
 </style>

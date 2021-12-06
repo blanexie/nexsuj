@@ -1,17 +1,13 @@
 package com.github.blanexie.nexusj.controller
 
 import cn.hutool.core.net.URLDecoder
-import cn.hutool.core.util.ByteUtil
 import cn.hutool.core.util.HexUtil
-import com.github.blanexie.dao.PeerDO
-import com.github.blanexie.dao.UserTorrentDO
-import com.github.blanexie.dao.peerDO
-import com.github.blanexie.dao.userTorrentDO
 import com.github.blanexie.nexusj.bencode.bencode
-import com.github.blanexie.nexusj.support.database
 import com.github.blanexie.nexusj.support.event.eventBus
 import com.github.blanexie.nexusj.support.event.uploadBytes
 import com.github.blanexie.nexusj.support.gson
+import com.github.blanexie.nexusj.table.PeerDO
+import com.github.blanexie.nexusj.table.UserTorrentDO
 import com.google.gson.reflect.TypeToken
 import io.ktor.application.*
 import io.ktor.features.*
@@ -19,16 +15,10 @@ import io.ktor.http.*
 import io.ktor.request.*
 import io.ktor.response.*
 import io.ktor.routing.*
-import io.netty.buffer.ByteBuf
 import io.netty.buffer.Unpooled
-import org.ktorm.dsl.and
-import org.ktorm.dsl.eq
-import org.ktorm.dsl.inList
-import org.ktorm.entity.*
 import org.slf4j.LoggerFactory
 import java.lang.reflect.Type
 import java.net.InetAddress
-import java.nio.ByteBuffer
 import java.time.LocalDateTime
 
 val log = LoggerFactory.getLogger("announce")!!
@@ -64,9 +54,7 @@ fun Route.tracker() {
         }
 
         // 2. 找出符合的peer返回
-        val peerDOs = database().peerDO.filter {
-            (it.infoHash eq peer.infoHash) and (it.event inList peerEvent)
-        }.toList()
+        val peerDOs = PeerDO.findByInfoHashAndEventIn(peer.infoHash, peerEvent)
         // 2.1 找出本机peer
         var peerDO: PeerDO? = peerDOs.findLast { it.authKey == peer.authKey }
         if (peerDO == null) {

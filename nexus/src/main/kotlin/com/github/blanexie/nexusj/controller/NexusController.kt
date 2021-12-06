@@ -4,12 +4,15 @@ import cn.hutool.core.io.IoUtil
 import cn.hutool.core.util.IdUtil
 import cn.hutool.core.util.URLUtil
 import com.dampcake.bencode.BencodeInputStream
-import com.github.blanexie.dao.*
 import com.github.blanexie.nexusj.bencode.toTorrent
 import com.github.blanexie.nexusj.controller.param.Result
 import com.github.blanexie.nexusj.controller.param.TorrentQuery
 import com.github.blanexie.nexusj.controller.param.UserQuery
 import com.github.blanexie.nexusj.support.*
+import com.github.blanexie.nexusj.table.RoleDO
+import com.github.blanexie.nexusj.table.TorrentDO
+import com.github.blanexie.nexusj.table.UserDO
+import com.github.blanexie.nexusj.table.UserTorrentDO
 import io.ktor.application.*
 import io.ktor.auth.*
 import io.ktor.http.*
@@ -17,9 +20,6 @@ import io.ktor.http.content.*
 import io.ktor.request.*
 import io.ktor.response.*
 import io.ktor.routing.*
-import org.ktorm.dsl.and
-import org.ktorm.dsl.eq
-import org.ktorm.entity.firstOrNull
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.File
@@ -55,7 +55,8 @@ fun Route.notAuth() {
      */
     post("/login") {
         val loginParam = call.receive<UserQuery>()
-        val userDO = database().userDO.firstOrNull { (it.pwd eq loginParam.pwd!!) and (it.email eq loginParam.email!!) }
+
+        val userDO =  UserDO.findByEmailAndPwd(loginParam.email!!,loginParam.pwd!!)
         if (userDO == null) {
             call.respond(Result(403, "登录失败"))
             return@post
@@ -75,8 +76,11 @@ fun Route.auth() {
      * 搜索查询
      */
     post("/torrent/list") {
+        val principal = call.authentication.principal<UserPrincipal>()!!
+        val user = principal.user
+
         val torrentQuery = call.receive<TorrentQuery>()
-        val result = TorrentDO.findByQuery(torrentQuery)
+        val result = TorrentDO.findByQuery(torrentQuery, user.id)
         val ids = result.map { it.userId }.toList()
         val userDOs = UserDO.findByIds(ids)
         val map1 = result.map { torrent ->

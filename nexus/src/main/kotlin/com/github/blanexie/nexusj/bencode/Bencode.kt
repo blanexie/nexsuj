@@ -3,12 +3,11 @@ package com.github.blanexie.nexusj.bencode
 import cn.hutool.core.io.FileUtil
 import cn.hutool.crypto.digest.DigestUtil
 import com.dampcake.bencode.Bencode
-import com.github.blanexie.dao.TorrentDO
 import com.github.blanexie.nexusj.support.UTF8
 import com.github.blanexie.nexusj.support.gson
 import com.github.blanexie.nexusj.support.setting
 import com.github.blanexie.nexusj.support.tempDir
-import io.ktor.util.*
+import com.github.blanexie.nexusj.table.TorrentDO
 import java.io.File
 import java.nio.ByteBuffer
 import java.time.LocalDateTime
@@ -62,7 +61,7 @@ fun toTorrent(reqMap: Map<String, Any>): TorrentDO {
     torrent.uploadTime = LocalDateTime.now()
     torrent.status = 0
     torrent.ration = 1
-    torrent.rationTime =  LocalDateTime.now().plusDays(3)
+    torrent.rationTime = LocalDateTime.now().plusDays(3)
 
     val torrentPath = setting["torrent.path"]
 
