@@ -14,7 +14,6 @@ http://bittorrent.org/beps/bep_0000.html
 
 * https://blog.csdn.net/u010087886/article/details/46829793
 
-nohup transmission-create -p -t http://192.168.1.5:8080/announce?auth_key=sasfsaf  -s 2048 /downloads/complete/'[鹰]20216月合集[1080P]' &
 ## 准备实现的协议
 
 BEP：10 Extension Protocol
