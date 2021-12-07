@@ -9,7 +9,7 @@ import org.ktorm.entity.*
 import org.ktorm.schema.*
 import java.time.LocalDateTime
 
-/********************************************************/
+/***************************  节点信息  *****************************/
 val Database.peerDO get() = this.sequenceOf(Peer)
 
 interface PeerDO : Entity<PeerDO> {
