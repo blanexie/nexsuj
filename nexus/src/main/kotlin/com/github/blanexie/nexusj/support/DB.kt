@@ -7,8 +7,8 @@ import org.ktorm.logging.Slf4jLoggerAdapter
 import org.slf4j.LoggerFactory
 
 val logger = LoggerFactory.getLogger("database")!!
-private var database: Database? = null
 
+private var database: Database? = null
 
 fun database(): Database {
     if (database == null) {

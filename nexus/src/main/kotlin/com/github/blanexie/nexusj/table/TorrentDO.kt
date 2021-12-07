@@ -20,7 +20,7 @@ import java.time.LocalDateTime
 
 /***************************************************************/
 
-val logger = LoggerFactory.getLogger("TorrentDO")
+val logger = LoggerFactory.getLogger("TorrentDO")!!
 val Database.torrentDO get() = this.sequenceOf(Torrent)
 
 interface TorrentDO : Entity<TorrentDO> {
@@ -37,7 +37,7 @@ interface TorrentDO : Entity<TorrentDO> {
             val torrentList = database().useConnection { conn ->
                 val (params, sqlB) = buildSqlAndParams(torrentQuery, currentUserId)
                 logger.info("sql:{}", sqlB)
-                listTorrent(conn, sqlB, params)
+                rowMapTorrentDO(conn, sqlB.toString(), params)
             }
             return torrentList
         }
@@ -103,7 +103,6 @@ interface TorrentDO : Entity<TorrentDO> {
     }
 }
 
-
 object Torrent : Table<TorrentDO>("torrent") {
     var id = int("id").primaryKey().bindTo { it.id }
 
@@ -130,15 +129,17 @@ object Torrent : Table<TorrentDO>("torrent") {
 }
 
 
-private fun listTorrent(
+private fun rowMapTorrentDO(
     conn: Connection,
-    sqlB: StringBuilder,
+    sql: String,
     params: MutableList<Any>
 ): List<TorrentDO> {
-    val torrents = conn.prepareStatement(sqlB.toString()).use { statement ->
+    val torrents = conn.prepareStatement(sql).use { statement ->
+        //放入查询参数
         for ((index, param) in params.withIndex()) {
             statement.setObject(index + 1, param)
         }
+        //获取查询结果, 并并转化成对象
         val torrentList = statement.executeQuery().asIterable().map {
             val torrentDO = TorrentDO()
             torrentDO.id = it.getInt("id")
@@ -162,12 +163,7 @@ private fun listTorrent(
             torrentDO.left = it.getLong("left")
             torrentDO.uploaded = it.getLong("uploaded")
             torrentDO.event = it.getString("event")
-            val utStatus = it.getString("ut_status")
-            logger.info("直接取出： $utStatus")
-            if (utStatus != null) {
-                torrentDO.utStatus = utStatus.toInt()
-            }
-            logger.info("测试： ${torrentDO.utStatus}")
+            torrentDO.utStatus = it.getObject("ut_status") as Int?
             torrentDO
         }
         torrentList
@@ -180,7 +176,7 @@ private fun buildSqlAndParams(torrentQuery: TorrentQuery, currentUserId: Int): P
 
     val sqlB = StringBuilder(
         """
-            select t.*, ut.status as ut_status, p.`left`, p.downloaded, p.event, p.uploaded  from torrent t
+            select t.*, ut.status as ut_status,  p.`left`, p.downloaded, p.event, p.uploaded  from torrent t
             left join  user_torrent ut on ut.info_hash = t.info_hash and ut.user_id = ${currentUserId}
             left join  peer p on t.info_hash= p.info_hash and ut.auth_key = p.auth_key
             where 1 = 1 
@@ -207,15 +203,16 @@ private fun buildSqlAndParams(torrentQuery: TorrentQuery, currentUserId: Int): P
         var first = true
         torrentQuery.labels!!.forEach {
             if (first) {
-                sqlB.append(" JSON_CONTAINS( '[1,2,3,4]', ?, '$')  ")
+                sqlB.append(" JSON_CONTAINS( '[1,2,3,4]', ?, '$') ")
                 params.add(it!!)
             } else {
-                sqlB.append(" OR JSON_CONTAINS( '[1,2,3,4]',  ?, '$')  ")
+                sqlB.append(" OR JSON_CONTAINS( '[1,2,3,4]',  ?, '$') ")
                 params.add(it!!)
             }
         }
         sqlB.append(" ) ")
     }
+    //分页参数
     sqlB.append(" limit ?,?")
     params.add((torrentQuery.pageNo - 1) * torrentQuery.pageSize)
     params.add(torrentQuery.pageSize)

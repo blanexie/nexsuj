@@ -31,7 +31,7 @@ val peerEvent = listOf(
 
 fun Route.tracker() {
 
-    get("/announce") {
+    get() {
         // 0. 检查访问的客户端是否符合要求
         val errorMsg = blockBrowser(call.request)
         if (errorMsg != null) {

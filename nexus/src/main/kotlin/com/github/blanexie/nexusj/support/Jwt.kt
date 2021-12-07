@@ -11,40 +11,15 @@ import com.auth0.jwt.algorithms.Algorithm
 import io.ktor.application.*
 import java.util.*
 
-val jwtAesKey = setting["jwt.aesKey"]!!
 val issuer = setting["jwt.domain"]!!
 val audience = setting["jwt.audience"]!!
 val realm = setting["jwt.realm"]!!
+
+val jwtAesKey = setting["jwt.aesKey"]!!
 val secret = setting["jwt.secret"]!!
-
-var algorithm: Algorithm = Algorithm.HMAC256(secret)
-
+val algorithm: Algorithm = Algorithm.HMAC256(secret)
 val aes: AES = AES(Digester(DigestAlgorithm.SHA256).digest(jwtAesKey))
-
-open class SimpleJWT {
-
-    val verifier: JWTVerifier = JWT.require(algorithm)
-        .withAudience(audience)
-        .withIssuer(issuer)
-        .build()
-
-    fun issuer(): String {
-        return issuer
-    }
-
-    fun realm(): String {
-        return realm
-    }
-
-    fun audience(): String {
-        return audience
-    }
-
-    fun secret(): String {
-        return secret
-    }
-
-}
+val verifier: JWTVerifier = JWT.require(algorithm).withAudience(audience).withIssuer(issuer).build()
 
 fun Application.jwtSign(subject: String): String {
     val expiredDate = DateUtil.offsetDay(Date(), 7)
@@ -64,5 +39,5 @@ fun Application.jwtDecode(subject: String): String {
 
 fun Application.jwtEncode(subject: String): String {
     val gzip = ZipUtil.gzip(subject.toByteArray())
-    return  aes.encryptBase64(gzip)
+    return aes.encryptBase64(gzip)
 }

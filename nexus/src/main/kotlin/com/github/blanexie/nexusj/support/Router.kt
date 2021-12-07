@@ -1,7 +1,6 @@
 package com.github.blanexie.nexusj.support
 
 import cn.hutool.core.io.resource.ClassPathResource
-import cn.hutool.json.JSONUtil
 import cn.hutool.setting.Setting
 import com.github.blanexie.nexusj.controller.auth
 import com.github.blanexie.nexusj.controller.notAuth
@@ -16,17 +15,16 @@ import io.ktor.http.*
 import io.ktor.routing.*
 import java.text.DateFormat
 import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
-
 
 val setting = Setting(ClassPathResource(System.getProperty("properties.path") ?: "app.properties").path)
-val dateFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")!!
-val simpleJWT = SimpleJWT()
 
+/**
+ * 从token 恢复用户的信息
+ */
 fun buildUserPrincipal(jwtDecode: String): UserPrincipal {
-    val fromJson = JSONUtil.parseObj(jwtDecode)
+    val userMap = gson.fromJson<Map<String, *>>(jwtDecode, Map::class.java)
     val userDO = UserDO()
-    fromJson.forEach { t, u ->
+    userMap.forEach { (t, u) ->
         run {
             userDO[t] = u
         }
@@ -35,10 +33,10 @@ fun buildUserPrincipal(jwtDecode: String): UserPrincipal {
 }
 
 fun Application.nexus(testing: Boolean = true) {
-
     install(AutoHeadResponse)
     install(Compression)
     install(CallLogging)
+    //json序列化设置
     install(ContentNegotiation) {
         gson {
             setDateFormat(DateFormat.LONG)
@@ -47,6 +45,7 @@ fun Application.nexus(testing: Boolean = true) {
             setPrettyPrinting()
         }
     }
+    //跨域设置
     install(CORS) {
         method(HttpMethod.Options)
         method(HttpMethod.Get)
@@ -61,11 +60,10 @@ fun Application.nexus(testing: Boolean = true) {
     }
     install(Authentication) {
         jwt {
-            verifier(simpleJWT.verifier)
-            this.realm = simpleJWT.realm()
+            verifier(verifier)
+            this.realm = realm
             validate { credential ->
-
-                if (credential.payload.audience.contains(simpleJWT.audience())) {
+                if (credential.payload.audience.contains(audience)) {
                     val subject = credential.payload.subject
                     val jwtDecode = jwtDecode(subject)
                     buildUserPrincipal(jwtDecode)
@@ -77,7 +75,7 @@ fun Application.nexus(testing: Boolean = true) {
     }
 
     routing {
-        route(("/")) {
+        route(("/announce")) {
             tracker()
         }
         route(("/api/nexus")) {

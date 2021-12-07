@@ -7,7 +7,6 @@ import cn.hutool.cache.file.LFUFileCache
 //参数3：超时。毫秒
 var fileCache = LFUFileCache(1024 * 1024 * 10, 1024 * 100, 60 * 60_000)
 
-
 /**
  * 临时文件夹地址
  */
