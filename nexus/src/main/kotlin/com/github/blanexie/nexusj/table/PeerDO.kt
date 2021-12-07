@@ -1,6 +1,5 @@
 package com.github.blanexie.nexusj.table
 
-import com.github.blanexie.nexusj.controller.peerEvent
 import com.github.blanexie.nexusj.support.database
 import org.ktorm.database.Database
 import org.ktorm.dsl.and

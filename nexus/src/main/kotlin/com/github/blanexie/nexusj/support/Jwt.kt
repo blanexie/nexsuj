@@ -11,7 +11,6 @@ import com.auth0.jwt.algorithms.Algorithm
 import io.ktor.application.*
 import java.util.*
 
-
 val jwtAesKey = setting["jwt.aesKey"]!!
 val issuer = setting["jwt.domain"]!!
 val audience = setting["jwt.audience"]!!
@@ -19,7 +18,6 @@ val realm = setting["jwt.realm"]!!
 val secret = setting["jwt.secret"]!!
 
 var algorithm: Algorithm = Algorithm.HMAC256(secret)
-
 
 val aes: AES = AES(Digester(DigestAlgorithm.SHA256).digest(jwtAesKey))
 
@@ -47,7 +45,6 @@ open class SimpleJWT {
     }
 
 }
-
 
 fun Application.jwtSign(subject: String): String {
     val expiredDate = DateUtil.offsetDay(Date(), 7)

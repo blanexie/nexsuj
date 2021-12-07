@@ -3,7 +3,7 @@ package com.github.blanexie.nexusj.controller.param
 data class TorrentQuery(
 
     /**
-     * 种子hash值
+     * hash值
      */
     var infoHash: String? = null,
 
@@ -26,7 +26,6 @@ data class TorrentQuery(
      * 免费率
      */
     var ratio: Int? = null,
-
 
     var pageNo: Int = 1,
 
